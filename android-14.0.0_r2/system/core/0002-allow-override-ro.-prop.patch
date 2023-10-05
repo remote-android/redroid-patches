@@ -1,0 +1,25 @@
+From be0a3e8f8e6e3103c69577cff072d02a54c5f4df Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 26 Jun 2021 05:42:24 +0000
+Subject: [PATCH 2/7] allow override ro.* prop
+
+---
+ init/property_service.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 8da69822c..29418343b 100755
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -1343,6 +1343,8 @@ static void ProcessKernelCmdline() {
+     ImportKernelCmdline([&](const std::string& key, const std::string& value) {
+         if (StartsWith(key, ANDROIDBOOT_PREFIX)) {
+             InitPropertySet("ro.boot." + key.substr(ANDROIDBOOT_PREFIX.size()), value);
++        } else if (StartsWith(key, "ro.")) {
++            InitPropertySet(key, value);
+         }
+     });
+ }
+-- 
+2.34.1
+

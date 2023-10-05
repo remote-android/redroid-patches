@@ -1,0 +1,126 @@
+From 38a49840b16cab5b0c6fe10ad87abc78b39c341d Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:09:00 +0800
+Subject: [PATCH 1/7] fix booting
+
+---
+ init/first_stage_init.cpp | 18 +++++++++++++++---
+ init/init.cpp             |  0
+ init/property_service.cpp |  0
+ init/service.cpp          |  3 ++-
+ init/util.cpp             |  3 ++-
+ rootdir/init.rc           |  1 -
+ 6 files changed, 19 insertions(+), 6 deletions(-)
+ mode change 100644 => 100755 init/init.cpp
+ mode change 100644 => 100755 init/property_service.cpp
+
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index 107e99a31..649f3ec76 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -35,6 +35,7 @@
+ #include <android-base/chrono_utils.h>
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
++#include <android-base/strings.h>
+ #include <modprobe/modprobe.h>
+ #include <private/android_filesystem_config.h>
+ 
+@@ -243,6 +244,8 @@ int FirstStageMain(int argc, char** argv) {
+     CHECKCALL(mkdir("/dev/pts", 0755));
+     CHECKCALL(mkdir("/dev/socket", 0755));
+     CHECKCALL(mkdir("/dev/dm-user", 0755));
++    mount("/system/etc", "/etc", "none", MS_BIND, NULL); // cgroup fix
++    unshare(CLONE_NEWCGROUP);
+     CHECKCALL(mount("devpts", "/dev/pts", "devpts", 0, NULL));
+ #define MAKE_STR(x) __STRING(x)
+     CHECKCALL(mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
+@@ -306,7 +309,6 @@ int FirstStageMain(int argc, char** argv) {
+         for (const auto& [error_string, error_errno] : errors) {
+             LOG(ERROR) << error_string << " " << strerror(error_errno);
+         }
+-        LOG(FATAL) << "Init encountered errors starting first stage, aborting";
+     }
+ 
+     LOG(INFO) << "init first stage started!";
+@@ -420,12 +422,22 @@ int FirstStageMain(int argc, char** argv) {
+            1);
+ 
+     const char* path = "/system/bin/init";
+-    const char* args[] = {path, "selinux_setup", nullptr};
++    std::vector<const char *> args = {path, "second_stage"};
++    std::string init_cmdline;
++    android::base::ReadFileToString("/proc/self/cmdline", &init_cmdline);
++    std::replace(init_cmdline.begin(), init_cmdline.end(), '\0', ' ');
++    auto cmd_vector = android::base::Split(android::base::Trim(init_cmdline), " ");
++    int i = 0;
++    for (const auto& entry : cmd_vector) {
++        if (i++ == 0) continue; // ignore first arg '/init'
++        args.push_back(entry.c_str());
++    }
++    args.push_back(nullptr);
+     auto fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC);
+     dup2(fd, STDOUT_FILENO);
+     dup2(fd, STDERR_FILENO);
+     close(fd);
+-    execv(path, const_cast<char**>(args));
++    execv(path, const_cast<char**>(args.data()));
+ 
+     // execv() only returns if an error happened, in which case we
+     // panic and never fall through this conditional.
+diff --git a/init/init.cpp b/init/init.cpp
+old mode 100644
+new mode 100755
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+old mode 100644
+new mode 100755
+diff --git a/init/service.cpp b/init/service.cpp
+index 35beaad33..3bdf7c26c 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -75,6 +75,7 @@ namespace android {
+ namespace init {
+ 
+ static Result<std::string> ComputeContextFromExecutable(const std::string& service_path) {
++    se_hack1("HACKED");
+     std::string computed_context;
+ 
+     char* raw_con = nullptr;
+@@ -371,7 +372,7 @@ void Service::Reap(const siginfo_t& siginfo) {
+                     if (!GetBoolProperty("init.svc_debug.no_fatal." + name_, false)) {
+                         // Aborts into `fatal_reboot_target_'.
+                         SetFatalRebootTarget(fatal_reboot_target_);
+-                        LOG(FATAL) << "critical process '" << name_ << "' exited 4 times "
++                        LOG(ERROR) << "critical process '" << name_ << "' exited 4 times "
+                                    << exit_reason;
+                     }
+                 } else {
+diff --git a/init/util.cpp b/init/util.cpp
+index bc8ea6eaf..78d76a297 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -242,7 +242,8 @@ int wait_for_file(const char* filename, std::chrono::nanoseconds timeout) {
+ 
+ void ImportKernelCmdline(const std::function<void(const std::string&, const std::string&)>& fn) {
+     std::string cmdline;
+-    android::base::ReadFileToString("/proc/cmdline", &cmdline);
++    android::base::ReadFileToString("/proc/self/cmdline", &cmdline); // HACKED
++    std::replace(cmdline.begin(), cmdline.end(), '\0', ' '); // HACKED
+ 
+     for (const auto& entry : android::base::Split(android::base::Trim(cmdline), " ")) {
+         std::vector<std::string> pieces = android::base::Split(entry, "=");
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 1e6918d00..5806d142e 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -571,7 +571,6 @@ on post-fs
+ 
+     # Once everything is setup, no need to modify /.
+     # The bind+remount combination allows this to work in containers.
+-    mount rootfs rootfs / remount bind ro nodev
+ 
+     # Mount default storage into root namespace
+     mount none /mnt/user/0 /storage bind rec
+-- 
+2.34.1
+
