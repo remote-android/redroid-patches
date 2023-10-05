@@ -1,0 +1,45 @@
+From a09e0e00fa9e7733f8d2b78f17d982cf3a91439d Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:44:12 +0800
+Subject: [PATCH] fix booting
+
+---
+ Binder.cpp       | 1 +
+ ProcessState.cpp | 3 +++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/Binder.cpp b/Binder.cpp
+index b90639f1..4070de0d 100644
+--- a/Binder.cpp
++++ b/Binder.cpp
+@@ -96,6 +96,7 @@ bool BHwBinder::isRequestingSid() {
+ }
+ 
+ void BHwBinder::setRequestingSid(bool requestingSid) {
++    requestingSid = false; // HACKED
+     Extras* e = mExtras.load(std::memory_order_acquire);
+ 
+     if (!e) {
+diff --git a/ProcessState.cpp b/ProcessState.cpp
+index dbd6c87c..8f83cbac 100644
+--- a/ProcessState.cpp
++++ b/ProcessState.cpp
+@@ -121,12 +121,15 @@ void ProcessState::becomeContextManager()
+ {
+     AutoMutex _l(mLock);
+ 
++#if 0 // HACKED (?)
+     flat_binder_object obj {
+         .flags = FLAT_BINDER_FLAG_TXN_SECURITY_CTX,
+     };
+ 
+     status_t result = ioctl(mDriverFD, BINDER_SET_CONTEXT_MGR_EXT, &obj);
++#endif
+ 
++    status_t result = 1;
+     // fallback to original method
+     if (result != 0) {
+         android_errorWriteLog(0x534e4554, "121035042");
+-- 
+2.34.1
+

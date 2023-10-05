@@ -1,0 +1,27 @@
+From 78c4b1ca9a702262ceff38a9976c17148b2aa084 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 26 Jun 2021 05:22:01 +0800
+Subject: [PATCH] fix booting
+
+---
+ bpfloader/BpfLoader.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index 7a68894..072f153 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -121,8 +121,10 @@ int main() {
+             ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+                   "problems or startup script race.");
+             ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
++#if 0 // HACKED
+             sleep(20);
+             return 2;
++#endif
+         }
+     }
+ 
+-- 
+2.34.1
+

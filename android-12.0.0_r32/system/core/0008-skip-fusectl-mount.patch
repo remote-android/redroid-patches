@@ -1,0 +1,24 @@
+From 58184b6db377b6d0550098055482d971d0c594ca Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 2 Sep 2023 17:10:16 +0800
+Subject: [PATCH 8/8] skip fusectl mount
+
+---
+ rootdir/init.rc | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index e8922c626..981ab45e3 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -234,7 +234,6 @@ on init
+     exec -- /vendor/bin/binder_alloc /dev/binderfs/binder-control binder hwbinder vndbinder
+ 
+     # Mount fusectl
+-    mount fusectl none /sys/fs/fuse/connections
+ 
+     symlink /dev/binderfs/binder /dev/binder
+     symlink /dev/binderfs/hwbinder /dev/hwbinder
+-- 
+2.34.1
+

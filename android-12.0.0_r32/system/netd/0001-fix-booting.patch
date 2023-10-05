@@ -1,0 +1,67 @@
+From ccb742f6ec38b4f0730f6686cadf9bb5560b68c3 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 31 Jul 2021 06:14:33 +0000
+Subject: [PATCH] fix booting?
+
+---
+ server/Controllers.cpp               | 2 ++
+ server/IptablesRestoreController.cpp | 1 +
+ server/TrafficController.cpp         | 4 ++--
+ 3 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/server/Controllers.cpp b/server/Controllers.cpp
+index 1f2bac22..18ada8c0 100644
+--- a/server/Controllers.cpp
++++ b/server/Controllers.cpp
+@@ -285,12 +285,14 @@ void Controllers::init() {
+     netdutils::Status tcStatus = trafficCtrl.start();
+     if (!isOk(tcStatus)) {
+         gLog.error("Failed to start trafficcontroller: (%s)", toString(tcStatus).c_str());
++#if 0 // HACKED
+         gLog.error("CRITICAL: sleeping 60 seconds, netd exiting with failure, crash loop likely!");
+         // The expected reason we get here is a major kernel or other code bug, as such
+         // the probability that things will succeed on restart of netd is pretty small.
+         // So, let's wait a minute to at least try to limit the log spam a little bit.
+         sleep(60);
+         exit(1);
++#endif
+     }
+     gLog.info("Initializing traffic control: %" PRId64 "us", s.getTimeAndResetUs());
+ 
+diff --git a/server/IptablesRestoreController.cpp b/server/IptablesRestoreController.cpp
+index 10cedfa3..8b0170e4 100644
+--- a/server/IptablesRestoreController.cpp
++++ b/server/IptablesRestoreController.cpp
+@@ -362,6 +362,7 @@ int IptablesRestoreController::execute(const IptablesTarget target, const std::s
+     if (target == V6 || target == V4V6) {
+         res |= sendCommand(IP6TABLES_PROCESS, command, output);
+     }
++    res = 0; // HACKED
+     return res;
+ }
+ 
+diff --git a/server/TrafficController.cpp b/server/TrafficController.cpp
+index 1f678cbf..cc23e213 100644
+--- a/server/TrafficController.cpp
++++ b/server/TrafficController.cpp
+@@ -716,7 +716,7 @@ Status TrafficController::swapActiveStatsMap() {
+     if (!oldConfiguration.ok()) {
+         ALOGE("Cannot read the old configuration from map: %s",
+               oldConfiguration.error().message().c_str());
+-        return Status(oldConfiguration.error().code(), oldConfiguration.error().message());
++        return netdutils::status::ok; // HACKED
+     }
+ 
+     // Write to the configuration map to inform the kernel eBPF program to switch
+@@ -741,7 +741,7 @@ Status TrafficController::swapActiveStatsMap() {
+     int ret = synchronizeKernelRCU();
+     if (ret) {
+         ALOGE("map swap synchronize_rcu() ended with failure: %s", strerror(-ret));
+-        return statusFromErrno(-ret, "map swap synchronize_rcu() failed");
++        //return statusFromErrno(-ret, "map swap synchronize_rcu() failed"); // HACKED
+     }
+     return netdutils::status::ok;
+ }
+-- 
+2.34.1
+
