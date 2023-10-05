@@ -1,0 +1,25 @@
+From 5d8ad1ddd88fd62a1e16fc2639429dba1f950841 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 27 Jun 2021 09:49:22 +0000
+Subject: [PATCH 3/8] ? fix first stage mount
+
+---
+ init/first_stage_init.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index 9ec04ab39..f347a1911 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -400,7 +400,7 @@ int FirstStageMain(int argc, char** argv) {
+     }
+ 
+     if (!DoFirstStageMount(!created_devices)) {
+-        LOG(FATAL) << "Failed to mount required partitions early ...";
++        LOG(ERROR) << "Failed to mount required partitions early ..."; // HACKED
+     }
+ 
+     struct stat new_root_info;
+-- 
+2.34.1
+

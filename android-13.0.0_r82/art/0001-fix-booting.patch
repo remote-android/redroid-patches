@@ -1,0 +1,24 @@
+From fed6efb775c67565a90bad33b3b2b510318d2795 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Tue, 16 Aug 2022 21:51:24 +0800
+Subject: [PATCH] fix booting
+
+---
+ runtime/gc/heap.cc | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/runtime/gc/heap.cc b/runtime/gc/heap.cc
+index 8407ba43760..bb7e718a9d6 100644
+--- a/runtime/gc/heap.cc
++++ b/runtime/gc/heap.cc
+@@ -4667,7 +4667,6 @@ void Heap::PostForkChildAction(Thread* self) {
+   } else {
+     // The syscall should fail only if it doesn't exist in the kernel or if it's
+     // denied by SELinux.
+-    CHECK(errno == ENOSYS || errno == EACCES) << "userfaultfd: " << strerror(errno);
+   }
+ #endif
+ 
+-- 
+2.34.1
+
