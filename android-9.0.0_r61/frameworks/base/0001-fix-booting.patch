@@ -1,0 +1,46 @@
+From c651d427ac02015e992cd30e41b0a5705c513b3a Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:04:12 +0800
+Subject: [PATCH 1/2] fix booting
+
+---
+ core/jni/android_os_VintfObject.cpp                            | 1 +
+ .../com/android/server/net/NetworkPolicyManagerService.java    | 3 ++-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/android_os_VintfObject.cpp b/core/jni/android_os_VintfObject.cpp
+index e8ef349f..58e13292 100644
+--- a/core/jni/android_os_VintfObject.cpp
++++ b/core/jni/android_os_VintfObject.cpp
+@@ -97,6 +97,7 @@ static jobjectArray android_os_VintfObject_report(JNIEnv* env, jclass)
+ }
+ 
+ static jint verify(JNIEnv* env, jobjectArray packageInfo, android::vintf::DisabledChecks checks) {
++    if (env) return 0; // HACKED NO sepolicy
+     std::vector<std::string> cPackageInfo;
+     if (packageInfo) {
+         size_t count = env->GetArrayLength(packageInfo);
+diff --git a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+index ab482bb2..ae3012d6 100644
+--- a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
++++ b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+@@ -712,6 +712,7 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
+             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
+             if (!isBandwidthControlEnabled()) {
+                 Slog.w(TAG, "bandwidth controls disabled, unable to enforce policy");
++                initCompleteSignal.countDown(); // HACKED
+                 return;
+             }
+ 
+@@ -3856,7 +3857,7 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
+ 
+         if (packages != null) {
+             for (String packageName : packages) {
+-                if (!mUsageStats.isAppIdle(packageName, uid, userId)) {
++                if (mUsageStats != null && !mUsageStats.isAppIdle(packageName, uid, userId)) {
+                     return false;
+                 }
+             }
+-- 
+2.34.1
+

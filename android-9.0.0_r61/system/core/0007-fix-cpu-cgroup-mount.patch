@@ -1,0 +1,32 @@
+From 2f606701c475ea3a40776e3760e5824a3e6d7de6 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 21 Aug 2022 11:24:11 +0800
+Subject: [PATCH 7/7] fix cpu cgroup mount
+
+---
+ rootdir/init.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index a9d5fc02c..e28d3ea8e 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -26,6 +26,7 @@ on early-init
+ 
+     # Mount cgroup mount point for cpu accounting
+     mount cgroup none /acct nodev noexec nosuid cpuacct
++    mount cgroup none /acct nodev noexec nosuid cpu,cpuacct
+     mkdir /acct/uid
+ 
+     # root memory control cgroup, used by lmkd
+@@ -151,6 +152,7 @@ on init
+     # Create cgroup mount points for process groups
+     mkdir /dev/cpuctl
+     mount cgroup none /dev/cpuctl nodev noexec nosuid cpu
++    mount cgroup none /dev/cpuctl nodev noexec nosuid cpu,cpuacct
+     chown system system /dev/cpuctl
+     chown system system /dev/cpuctl/tasks
+     chmod 0666 /dev/cpuctl/tasks
+-- 
+2.34.1
+

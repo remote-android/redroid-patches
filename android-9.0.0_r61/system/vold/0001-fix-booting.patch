@@ -1,0 +1,38 @@
+From c523d94d2378f865afa9debf3878601b86801c14 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:46:23 +0800
+Subject: [PATCH] fix booting
+
+---
+ IdleMaint.cpp            | 1 +
+ vold_prepare_subdirs.cpp | 2 +-
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/IdleMaint.cpp b/IdleMaint.cpp
+index 7744024..4ed4358 100644
+--- a/IdleMaint.cpp
++++ b/IdleMaint.cpp
+@@ -100,6 +100,7 @@ static void addFromFstab(std::list<std::string>* paths, PathTypes path_type) {
+     std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
+                                                                fs_mgr_free_fstab);
+     struct fstab_rec *prev_rec = NULL;
++    if (!fstab) return; // HACKED
+ 
+     for (int i = 0; i < fstab->num_entries; i++) {
+         auto fs_type = std::string(fstab->recs[i].fs_type);
+diff --git a/vold_prepare_subdirs.cpp b/vold_prepare_subdirs.cpp
+index 1b466e9..5d358ba 100644
+--- a/vold_prepare_subdirs.cpp
++++ b/vold_prepare_subdirs.cpp
+@@ -62,7 +62,7 @@ static bool prepare_dir(struct selabel_handle* sehandle, mode_t mode, uid_t uid,
+     if (sehandle && selabel_lookup(sehandle, &tmp_secontext, path.c_str(), S_IFDIR) == 0) {
+         secontext.reset(tmp_secontext);
+     }
+-    LOG(DEBUG) << "Setting up mode " << std::oct << mode << std::dec << " uid " << uid << " gid "
++    if (secontext) LOG(DEBUG) << "Setting up mode " << std::oct << mode << std::dec << " uid " << uid << " gid "
+                << gid << " context " << secontext.get() << " on path: " << path;
+     if (secontext) {
+         if (setfscreatecon(secontext.get()) != 0) {
+-- 
+2.34.1
+

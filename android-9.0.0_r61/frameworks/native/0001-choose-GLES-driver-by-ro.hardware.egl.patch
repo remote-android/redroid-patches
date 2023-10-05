@@ -1,0 +1,43 @@
+From 12e1b51851b30afe4588b0e71846e6bfeaded223 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:19:00 +0800
+Subject: [PATCH] choose GLES driver by `ro.hardware.egl`
+
+---
+ opengl/libs/EGL/Loader.cpp | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
+
+diff --git a/opengl/libs/EGL/Loader.cpp b/opengl/libs/EGL/Loader.cpp
+index 91a3455..c50494f 100644
+--- a/opengl/libs/EGL/Loader.cpp
++++ b/opengl/libs/EGL/Loader.cpp
+@@ -338,14 +338,6 @@ static void* load_system_driver(const char* kind) {
+                     result = std::string("/vendor/lib64/egl/lib") + kind + "_emulation.so";
+ #else
+                     result = std::string("/vendor/lib/egl/lib") + kind + "_emulation.so";
+-#endif
+-                    return result;
+-                case 2:
+-                    // Use guest side swiftshader library
+-#if defined(__LP64__)
+-                    result = std::string("/vendor/lib64/egl/lib") + kind + "_swiftshader.so";
+-#else
+-                    result = std::string("/vendor/lib/egl/lib") + kind + "_swiftshader.so";
+ #endif
+                     return result;
+                 default:
+@@ -382,6 +374,11 @@ static void* load_system_driver(const char* kind) {
+             //      libEGL_*.so, libGLESv1_CM_*.so, libGLESv2_*.so
+ 
+             pattern.append("_");
++            {
++                char prop[PROPERTY_VALUE_MAX];
++                property_get("ro.hardware.egl", prop, "swiftshader");
++                pattern.append(prop);
++            }
+             for (size_t i=0 ; i<NELEM(searchPaths) ; i++) {
+                 if (find(result, pattern, searchPaths[i], false)) {
+                     return result;
+-- 
+2.34.1
+

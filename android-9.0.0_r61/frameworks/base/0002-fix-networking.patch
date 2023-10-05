@@ -1,0 +1,37 @@
+From eabc5f138894eec1234e336ff5ba9d51618d4d71 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:29:50 +0800
+Subject: [PATCH 2/2] fix networking
+
+---
+ core/java/android/net/ConnectivityManager.java                   | 1 +
+ .../java/com/android/server/connectivity/NetworkMonitor.java     | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/core/java/android/net/ConnectivityManager.java b/core/java/android/net/ConnectivityManager.java
+index c5cb1f5b..df564509 100644
+--- a/core/java/android/net/ConnectivityManager.java
++++ b/core/java/android/net/ConnectivityManager.java
+@@ -1044,6 +1044,7 @@ public class ConnectivityManager {
+     @RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
+     public NetworkInfo getNetworkInfo(int networkType) {
+         try {
++            if (networkType == ConnectivityManager.TYPE_WIFI) networkType = ConnectivityManager.TYPE_ETHERNET;
+             return mService.getNetworkInfo(networkType);
+         } catch (RemoteException e) {
+             throw e.rethrowFromSystemServer();
+diff --git a/services/core/java/com/android/server/connectivity/NetworkMonitor.java b/services/core/java/com/android/server/connectivity/NetworkMonitor.java
+index 208fb105..3c478f95 100644
+--- a/services/core/java/com/android/server/connectivity/NetworkMonitor.java
++++ b/services/core/java/com/android/server/connectivity/NetworkMonitor.java
+@@ -1083,6 +1083,7 @@ public class NetworkMonitor extends StateMachine {
+     @VisibleForTesting
+     protected CaptivePortalProbeResult sendHttpProbe(URL url, int probeType,
+             @Nullable CaptivePortalProbeSpec probeSpec) {
++        if (url != null) return new CaptivePortalProbeResult(CaptivePortalProbeResult.SUCCESS_CODE);
+         HttpURLConnection urlConnection = null;
+         int httpResponseCode = CaptivePortalProbeResult.FAILED_CODE;
+         String redirectUrl = null;
+-- 
+2.34.1
+

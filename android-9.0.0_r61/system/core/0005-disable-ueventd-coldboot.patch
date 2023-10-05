@@ -1,0 +1,37 @@
+From 36a75c954e94b45ef7ceea80f6d2e346e5b73cae Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 2 Jan 2022 16:40:35 +0800
+Subject: [PATCH 5/7] disable ueventd coldboot
+
+---
+ init/init.cpp   | 1 -
+ rootdir/init.rc | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index ccba25f8a..0c4d1457c 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -575,7 +575,6 @@ int main(int argc, char** argv) {
+         setenv("PATH", _PATH_DEFPATH, 1);
+         // Get the basic filesystem setup we need put together in the initramdisk
+         // on / and then we'll let the rc file figure out the rest.
+-        mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755");
+         mkdir("/dev/pts", 0755);
+         mkdir("/dev/socket", 0755);
+         unshare(CLONE_NEWCGROUP); // HACKED
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index aee250bdd..a9d5fc02c 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -36,6 +36,7 @@ on early-init
+     # cgroup for system_server and surfaceflinger
+     mkdir /dev/memcg/system 0550 system system
+ 
++    write /dev/.coldboot_done 1
+     start ueventd
+ 
+ on init
+-- 
+2.34.1
+
