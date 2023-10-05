@@ -1,0 +1,24 @@
+From fe4d13d3a4848fb47388db75bc568f1b12adf814 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Mon, 10 May 2021 04:06:56 +0000
+Subject: [PATCH] fix networking
+
+---
+ java/com/android/server/ethernet/EthernetNetworkFactory.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/java/com/android/server/ethernet/EthernetNetworkFactory.java b/java/com/android/server/ethernet/EthernetNetworkFactory.java
+index d6d0def..0babfe5 100644
+--- a/java/com/android/server/ethernet/EthernetNetworkFactory.java
++++ b/java/com/android/server/ethernet/EthernetNetworkFactory.java
+@@ -342,6 +342,7 @@ class EthernetNetworkFactory {
+                 return;
+             }
+             linkProperties = config.getStaticIpConfiguration().toLinkProperties(mIface);
++            onIpLayerStarted(linkProperties);
+         } else {
+             mNetworkInfo.setDetailedState(DetailedState.OBTAINING_IPADDR, null, mHwAddr);
+             IpManager.Callback ipmCallback = new IpManager.Callback() {
+-- 
+2.34.1
+

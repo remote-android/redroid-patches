@@ -1,0 +1,25 @@
+From 0bf56cf5a84b101f6d51807049b70a7c64f4da5d Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 16 Oct 2022 11:09:21 +0800
+Subject: [PATCH] fix build
+
+---
+ core/definitions.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/definitions.mk b/core/definitions.mk
+index 95e9a02..61f99ca 100644
+--- a/core/definitions.mk
++++ b/core/definitions.mk
+@@ -2977,7 +2977,7 @@ endef
+ # $(1): The file(s) to check (often $@)
+ # $(2): The partition size.
+ define assert-max-image-size
+-$(if $(2), \
++#$(if $(2), \
+   $(call assert-max-file-size,$(1),$(call image-size-from-data-size,$(2))))
+ endef
+ 
+-- 
+2.34.1
+

@@ -1,0 +1,32 @@
+From 159916681388abee72d9c876c0f0b0374114af26 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Mon, 26 Apr 2021 23:01:03 +0800
+Subject: [PATCH] video playback workaround
+
+---
+ media/libstagefright/colorconversion/SoftwareRenderer.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/media/libstagefright/colorconversion/SoftwareRenderer.cpp b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+index a07787ac5a..5c684a592e 100644
+--- a/media/libstagefright/colorconversion/SoftwareRenderer.cpp
++++ b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+@@ -106,6 +106,7 @@ void SoftwareRenderer::resetFormatIfChanged(const sp<AMessage> &format) {
+     // hardware has YUV12 and RGBA8888 support, so convert known formats
+     {
+         switch (mColorFormat) {
++#if 0 // HACKED
+             case OMX_COLOR_FormatYUV420Planar:
+             case OMX_COLOR_FormatYUV420SemiPlanar:
+             case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
+@@ -115,6 +116,7 @@ void SoftwareRenderer::resetFormatIfChanged(const sp<AMessage> &format) {
+                 bufHeight = (mCropHeight + 1) & ~1;
+                 break;
+             }
++#endif
+             case OMX_COLOR_Format24bitRGB888:
+             {
+                 halFormat = HAL_PIXEL_FORMAT_RGB_888;
+-- 
+2.34.1
+

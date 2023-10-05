@@ -1,0 +1,26 @@
+From 334c600f7b10f789840d5a074f51d9fc43b86552 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 24 Jun 2021 15:26:57 +0000
+Subject: [PATCH 3/6] remove input subsystem
+
+---
+ rootdir/ueventd.rc | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index eadf219b5..88e20952f 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -21,9 +21,6 @@ subsystem msm_camera
+     devname uevent_devpath
+     dirname /dev/msm_camera
+ 
+-subsystem input
+-    devname uevent_devpath
+-    dirname /dev/input
+ 
+ subsystem mtd
+     devname uevent_devpath
+-- 
+2.34.1
+

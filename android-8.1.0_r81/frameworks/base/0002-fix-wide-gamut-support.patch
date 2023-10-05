@@ -1,0 +1,28 @@
+From 776aecb5d65541fbf301b25eb5a098a0ca232700 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:09:00 +0800
+Subject: [PATCH 2/3] fix wide gamut support
+
+---
+ libs/hwui/renderthread/EglManager.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libs/hwui/renderthread/EglManager.cpp b/libs/hwui/renderthread/EglManager.cpp
+index 16d77364942e..bd4708da562a 100644
+--- a/libs/hwui/renderthread/EglManager.cpp
++++ b/libs/hwui/renderthread/EglManager.cpp
+@@ -223,9 +223,9 @@ void EglManager::loadConfigs() {
+         numConfigs = 1;
+         if (!eglChooseConfig(mEglDisplay, attribs16F, &mEglConfigWideGamut, numConfigs, &numConfigs)
+                 || numConfigs != 1) {
+-            LOG_ALWAYS_FATAL(
+-                    "Device claims wide gamut support, cannot find matching config, error = %s",
++            ALOGE("Device claims wide gamut support, cannot find matching config, error = %s",
+                     eglErrorString());
++            EglExtensions.pixelFormatFloat = false;
+         }
+     }
+ }
+-- 
+2.34.1
+

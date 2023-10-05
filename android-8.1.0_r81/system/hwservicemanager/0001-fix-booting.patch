@@ -1,0 +1,80 @@
+From 52fd0d4ae6261696dd7e0f799b066feac37c0917 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:39:50 +0800
+Subject: [PATCH] fix booting
+
+---
+ AccessControl.cpp | 4 ++++
+ service.cpp       | 6 +++++-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/AccessControl.cpp b/AccessControl.cpp
+index 84f84d0..f068089 100644
+--- a/AccessControl.cpp
++++ b/AccessControl.cpp
+@@ -19,6 +19,7 @@ struct audit_data {
+ using android::FQName;
+ 
+ AccessControl::AccessControl() {
++#ifndef SE_HACK
+     mSeHandle = selinux_android_hw_service_context_handle();
+     LOG_ALWAYS_FATAL_IF(mSeHandle == NULL, "Failed to acquire SELinux handle.");
+ 
+@@ -27,6 +28,7 @@ AccessControl::AccessControl() {
+     }
+ 
+     selinux_status_open(true);
++#endif
+ 
+     mSeCallbacks.func_audit = AccessControl::auditCallback;
+     selinux_set_callback(SELINUX_CB_AUDIT, mSeCallbacks);
+@@ -75,6 +77,7 @@ AccessControl::CallingContext AccessControl::getCallingContext(pid_t sourcePid)
+ }
+ 
+ bool AccessControl::checkPermission(const CallingContext& source, const char *targetContext, const char *perm, const char *interface) {
++    se_hack1(true);
+     if (!source.sidPresent) {
+         return false;
+     }
+@@ -93,6 +96,7 @@ bool AccessControl::checkPermission(const CallingContext& source, const char *ta
+ }
+ 
+ bool AccessControl::checkPermission(const CallingContext& source, const char *perm, const char *interface) {
++    se_hack1(true);
+     char *targetContext = nullptr;
+     bool allowed = false;
+ 
+diff --git a/service.cpp b/service.cpp
+index 4fdf4df..5afb5a1 100644
+--- a/service.cpp
++++ b/service.cpp
+@@ -62,7 +62,7 @@ int main() {
+     configureRpcThreadpool(1, true /* callerWillJoin */);
+ 
+     sp<ServiceManager> manager = new ServiceManager();
+-    setRequestingSid(manager, true);
++//    setRequestingSid(manager, true); // HACKED
+ 
+     if (!manager->add(serviceName, manager)) {
+         ALOGE("Failed to register hwservicemanager with itself.");
+@@ -97,6 +97,7 @@ int main() {
+     // Tell IPCThreadState we're the service manager
+     sp<BnHwServiceManager> service = new BnHwServiceManager(manager);
+     IPCThreadState::self()->setTheContextObject(service);
++#ifndef SE_HACK
+     // Then tell binder kernel
+     flat_binder_object obj {
+         .flags = FLAT_BINDER_FLAG_TXN_SECURITY_CTX,
+@@ -110,6 +111,9 @@ int main() {
+ 
+         result = ioctl(binder_fd, BINDER_SET_CONTEXT_MGR, 0);
+     }
++#else
++    ioctl(binder_fd, BINDER_SET_CONTEXT_MGR, 0);
++#endif // SE_HACK
+ 
+     // Only enable FIFO inheritance for hwbinder
+     // FIXME: remove define when in the kernel
+-- 
+2.34.1
+

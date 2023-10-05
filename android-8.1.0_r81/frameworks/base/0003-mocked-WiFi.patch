@@ -1,0 +1,37 @@
+From d03f2e2f2b136b83c16373da9e54967e730d37a7 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:29:50 +0800
+Subject: [PATCH 3/3] mocked WiFi
+
+---
+ core/java/android/net/ConnectivityManager.java                   | 1 +
+ .../java/com/android/server/connectivity/NetworkMonitor.java     | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/core/java/android/net/ConnectivityManager.java b/core/java/android/net/ConnectivityManager.java
+index 467eb9b0b0bf..82f17e2d3a53 100644
+--- a/core/java/android/net/ConnectivityManager.java
++++ b/core/java/android/net/ConnectivityManager.java
+@@ -943,6 +943,7 @@ public class ConnectivityManager {
+     @RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
+     public NetworkInfo getNetworkInfo(int networkType) {
+         try {
++            if (networkType == ConnectivityManager.TYPE_WIFI) networkType = ConnectivityManager.TYPE_ETHERNET;
+             return mService.getNetworkInfo(networkType);
+         } catch (RemoteException e) {
+             throw e.rethrowFromSystemServer();
+diff --git a/services/core/java/com/android/server/connectivity/NetworkMonitor.java b/services/core/java/com/android/server/connectivity/NetworkMonitor.java
+index d3a93542c740..30a71cb9aded 100644
+--- a/services/core/java/com/android/server/connectivity/NetworkMonitor.java
++++ b/services/core/java/com/android/server/connectivity/NetworkMonitor.java
+@@ -858,6 +858,7 @@ public class NetworkMonitor extends StateMachine {
+      */
+     @VisibleForTesting
+     protected CaptivePortalProbeResult sendHttpProbe(URL url, int probeType) {
++        if (url != null) return new CaptivePortalProbeResult(CaptivePortalProbeResult.SUCCESS_CODE);
+         HttpURLConnection urlConnection = null;
+         int httpResponseCode = CaptivePortalProbeResult.FAILED_CODE;
+         String redirectUrl = null;
+-- 
+2.34.1
+

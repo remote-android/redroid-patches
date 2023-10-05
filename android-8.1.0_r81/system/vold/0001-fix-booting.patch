@@ -1,0 +1,24 @@
+From decbbb51037dde5ebeb9f2c8cd72c55419b4d967 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:46:23 +0800
+Subject: [PATCH] fix booting
+
+---
+ TrimTask.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/TrimTask.cpp b/TrimTask.cpp
+index 08e6499..4301007 100644
+--- a/TrimTask.cpp
++++ b/TrimTask.cpp
+@@ -68,6 +68,7 @@ void TrimTask::addFromFstab() {
+     std::unique_ptr<fstab, decltype(&fs_mgr_free_fstab)> fstab(fs_mgr_read_fstab_default(),
+                                                                fs_mgr_free_fstab);
+     struct fstab_rec *prev_rec = NULL;
++    if (!fstab) return; // HACKED
+ 
+     for (int i = 0; i < fstab->num_entries; i++) {
+         /* Skip raw partitions */
+-- 
+2.34.1
+

@@ -1,0 +1,22 @@
+From afc19bc44441c9eaadcbee6c1b60f07bdfbda0ba Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 27 Feb 2022 19:18:27 +0800
+Subject: [PATCH] fix build
+
+---
+ Android.bp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index b81c37c0f..e122a3404 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -105,5 +105,4 @@ subdirs = [
+     "src",
+     "third_party/llvm-subzero",
+     "third_party/LLVM",
+-    "third_party/subzero",
+ ]
+-- 
+2.34.1
+

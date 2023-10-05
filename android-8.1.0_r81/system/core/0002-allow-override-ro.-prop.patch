@@ -1,0 +1,25 @@
+From f93616ae0ec45a7c6f7efb08e3c0a98c9310743a Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:29:12 +0800
+Subject: [PATCH 2/6] allow override ro.* prop
+
+---
+ init/init.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 9114c4b04..32186044a 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -483,6 +483,8 @@ static void import_kernel_nv(const std::string& key, const std::string& value, b
+         strlcpy(qemu, value.c_str(), sizeof(qemu));
+     } else if (android::base::StartsWith(key, "androidboot.")) {
+         property_set("ro.boot." + key.substr(12), value);
++    } else if (android::base::StartsWith(key, "ro.")) {
++        property_set(key, value);
+     }
+ }
+ 
+-- 
+2.34.1
+

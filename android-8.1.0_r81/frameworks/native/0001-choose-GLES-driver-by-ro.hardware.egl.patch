@@ -1,0 +1,28 @@
+From 0e477419eea5221c56709c890f36e9748c93b3ea Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:19:00 +0800
+Subject: [PATCH] choose GLES driver by `ro.hardware.egl`
+
+---
+ opengl/libs/EGL/Loader.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/opengl/libs/EGL/Loader.cpp b/opengl/libs/EGL/Loader.cpp
+index 371239ddc0..d451831aa3 100644
+--- a/opengl/libs/EGL/Loader.cpp
++++ b/opengl/libs/EGL/Loader.cpp
+@@ -374,6 +374,11 @@ static void* load_system_driver(const char* kind) {
+             //      libEGL_*.so, libGLESv1_CM_*.so, libGLESv2_*.so
+ 
+             pattern.append("_");
++            {
++                char prop[PROPERTY_VALUE_MAX];
++                property_get("ro.hardware.egl", prop, "swiftshader");
++                pattern.append(prop);
++            }
+             for (size_t i=0 ; i<NELEM(searchPaths) ; i++) {
+                 if (find(result, pattern, searchPaths[i], false)) {
+                     return result;
+-- 
+2.34.1
+

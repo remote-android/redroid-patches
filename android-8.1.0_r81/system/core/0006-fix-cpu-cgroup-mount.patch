@@ -1,0 +1,32 @@
+From e7d905b53f72bceafeffd5e7e3948f25bc313038 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 21 Aug 2022 11:24:11 +0800
+Subject: [PATCH 6/6] fix cpu cgroup mount
+
+---
+ rootdir/init.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index c46190d1f..fef98f000 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -29,6 +29,7 @@ on early-init
+ 
+     # Mount cgroup mount point for cpu accounting
+     mount cgroup none /acct cpuacct
++    mount cgroup none /acct cpu,cpuacct
+     mkdir /acct/uid
+ 
+     # root memory control cgroup, used by lmkd
+@@ -155,6 +156,7 @@ on init
+     # Create cgroup mount points for process groups
+     mkdir /dev/cpuctl
+     mount cgroup none /dev/cpuctl cpu
++    mount cgroup none /dev/cpuctl cpu,cpuacct
+     chown system system /dev/cpuctl
+     chown system system /dev/cpuctl/tasks
+     chmod 0666 /dev/cpuctl/tasks
+-- 
+2.34.1
+

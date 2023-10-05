@@ -1,0 +1,177 @@
+From 4da2528fa5774e0313b3e98e703cf49d181cfa48 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:27:12 +0800
+Subject: [PATCH 1/6] fix booting
+
+---
+ init/init.cpp             | 15 +++++++++++++--
+ init/log.cpp              |  2 ++
+ init/property_service.cpp |  1 +
+ init/service.cpp          |  2 +-
+ init/util.cpp             |  3 ++-
+ rootdir/init.rc           | 21 ++++++++++-----------
+ 6 files changed, 29 insertions(+), 15 deletions(-)
+ mode change 100644 => 100755 init/init.cpp
+ mode change 100644 => 100755 init/property_service.cpp
+
+diff --git a/init/init.cpp b/init/init.cpp
+old mode 100644
+new mode 100755
+index f65bfe08c..9114c4b04
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -873,6 +873,8 @@ static bool selinux_load_policy() {
+ }
+ 
+ static void selinux_initialize(bool in_kernel_domain) {
++    setenv("INIT_SELINUX_TOOK", "0", 1);
++    se_hack();
+     Timer t;
+ 
+     selinux_callback cb;
+@@ -1016,6 +1018,7 @@ int main(int argc, char** argv) {
+         mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755");
+         mkdir("/dev/pts", 0755);
+         mkdir("/dev/socket", 0755);
++        unshare(CLONE_NEWCGROUP);
+         mount("devpts", "/dev/pts", "devpts", 0, NULL);
+         #define MAKE_STR(x) __STRING(x)
+         mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC));
+@@ -1059,8 +1062,16 @@ int main(int argc, char** argv) {
+         setenv("INIT_STARTED_AT", std::to_string(start_ms).c_str(), 1);
+ 
+         char* path = argv[0];
+-        char* args[] = { path, nullptr };
+-        execv(path, args);
++        std::vector<const char *> args = {};
++        std::string cmdline;
++        android::base::ReadFileToString("/proc/self/cmdline", &cmdline);
++        std::replace(cmdline.begin(), cmdline.end(), '\0', ' ');
++        auto cmd_vector = android::base::Split(android::base::Trim(cmdline), " ");
++        for (const auto& entry : cmd_vector) {
++            args.push_back(entry.c_str());
++        }
++        args.push_back(nullptr);
++        execv(path, const_cast<char**>(args.data()));
+ 
+         // execv() only returns if an error happened, in which case we
+         // panic and never fall through this conditional.
+diff --git a/init/log.cpp b/init/log.cpp
+index 1830077e1..de2af6bae 100644
+--- a/init/log.cpp
++++ b/init/log.cpp
+@@ -27,6 +27,7 @@ namespace android {
+ namespace init {
+ 
+ void InitKernelLogging(char* argv[]) {
++#if 0 // HACKED
+     // Make stdin/stdout/stderr all point to /dev/null.
+     int fd = open("/sys/fs/selinux/null", O_RDWR);
+     if (fd == -1) {
+@@ -40,6 +41,7 @@ void InitKernelLogging(char* argv[]) {
+     dup2(fd, 2);
+     if (fd > 2) close(fd);
+ 
++#endif
+     android::base::InitLogging(argv, &android::base::KernelLogger);
+ }
+ 
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+old mode 100644
+new mode 100755
+index fd14bd66f..2b75834fd
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -77,6 +77,7 @@ void property_init() {
+ 
+ static bool check_mac_perms(const std::string& name, char* sctx, struct ucred* cr) {
+ 
++    se_hack1(true);
+     if (!sctx) {
+       return false;
+     }
+diff --git a/init/service.cpp b/init/service.cpp
+index f5e54dfda..5f017c12a 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -59,6 +59,7 @@ namespace init {
+ 
+ static std::string ComputeContextFromExecutable(std::string& service_name,
+                                                 const std::string& service_path) {
++    se_hack1("HACKED");
+     std::string computed_context;
+ 
+     char* raw_con = nullptr;
+@@ -326,7 +327,6 @@ void Service::Reap() {
+         if (now < time_crashed_ + 4min) {
+             if (++crash_count_ > 4) {
+                 LOG(ERROR) << "critical process '" << name_ << "' exited 4 times in 4 minutes";
+-                panic();
+             }
+         } else {
+             time_crashed_ = now;
+diff --git a/init/util.cpp b/init/util.cpp
+index fdcb22d1c..6d2a24593 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -239,7 +239,8 @@ int wait_for_file(const char* filename, std::chrono::nanoseconds timeout) {
+ void import_kernel_cmdline(bool in_qemu,
+                            const std::function<void(const std::string&, const std::string&, bool)>& fn) {
+     std::string cmdline;
+-    android::base::ReadFileToString("/proc/cmdline", &cmdline);
++    android::base::ReadFileToString("/proc/self/cmdline", &cmdline); // HACKED
++    std::replace(cmdline.begin(), cmdline.end(), '\0', ' '); // HACKED
+ 
+     for (const auto& entry : android::base::Split(android::base::Trim(cmdline), " ")) {
+         std::vector<std::string> pieces = android::base::Split(entry, "=");
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 2a7333563..9e61bbcdf 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -167,25 +167,25 @@ on init
+     # this ensures that the cpusets are present and usable, but the device's
+     # init.rc must actually set the correct cpus
+     mkdir /dev/cpuset/foreground
+-    copy /dev/cpuset/cpus /dev/cpuset/foreground/cpus
+-    copy /dev/cpuset/mems /dev/cpuset/foreground/mems
++    copy /dev/cpuset/cpuset.cpus /dev/cpuset/foreground/cpuset.cpus
++    copy /dev/cpuset/cpuset.mems /dev/cpuset/foreground/cpuset.mems
+     mkdir /dev/cpuset/foreground/boost
+-    copy /dev/cpuset/cpus /dev/cpuset/foreground/boost/cpus
+-    copy /dev/cpuset/mems /dev/cpuset/foreground/boost/mems
++    copy /dev/cpuset/cpuset.cpus /dev/cpuset/foreground/boost/cpuset.cpus
++    copy /dev/cpuset/cpuset.mems /dev/cpuset/foreground/boost/cpuset.mems
+     mkdir /dev/cpuset/background
+-    copy /dev/cpuset/cpus /dev/cpuset/background/cpus
+-    copy /dev/cpuset/mems /dev/cpuset/background/mems
++    copy /dev/cpuset/cpuset.cpus /dev/cpuset/background/cpuset.cpus
++    copy /dev/cpuset/cpuset.mems /dev/cpuset/background/cpuset.mems
+ 
+     # system-background is for system tasks that should only run on
+     # little cores, not on bigs
+     # to be used only by init, so don't change system-bg permissions
+     mkdir /dev/cpuset/system-background
+-    copy /dev/cpuset/cpus /dev/cpuset/system-background/cpus
+-    copy /dev/cpuset/mems /dev/cpuset/system-background/mems
++    copy /dev/cpuset/cpuset.cpus /dev/cpuset/system-background/cpuset.cpus
++    copy /dev/cpuset/cpuset.mems /dev/cpuset/system-background/cpuset.mems
+ 
+     mkdir /dev/cpuset/top-app
+-    copy /dev/cpuset/cpus /dev/cpuset/top-app/cpus
+-    copy /dev/cpuset/mems /dev/cpuset/top-app/mems
++    copy /dev/cpuset/cpuset.cpus /dev/cpuset/top-app/cpuset.cpus
++    copy /dev/cpuset/cpuset.mems /dev/cpuset/top-app/cpuset.mems
+ 
+     # change permissions for all cpusets we'll touch at runtime
+     chown system system /dev/cpuset
+@@ -314,7 +314,6 @@ on post-fs
+     start vndservicemanager
+ 
+     # once everything is setup, no need to modify /
+-    mount rootfs rootfs / ro remount
+     # Mount shared so changes propagate into child namespaces
+     mount rootfs rootfs / shared rec
+     # Mount default storage into root namespace
+-- 
+2.34.1
+
