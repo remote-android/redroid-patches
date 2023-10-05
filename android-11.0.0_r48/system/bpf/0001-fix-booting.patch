@@ -1,0 +1,24 @@
+From e8c5556f165a7fa0c37507a7ab84fbbd1103ce38 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Fri, 25 Jun 2021 15:04:35 +0000
+Subject: [PATCH] fix booting
+
+---
+ bpfloader/BpfLoader.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index e67c469..92fa1b6 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -89,7 +89,6 @@ int main() {
+         ALOGE("If this triggers randomly, you might be hitting some memory allocation problems or "
+               "startup script race.");
+         ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+-        return 2;
+     }
+ 
+     if (android::base::SetProperty("bpf.progs_loaded", "1") == false) {
+-- 
+2.34.1
+

@@ -1,0 +1,25 @@
+From 30253820d549e09ac21495983370d32dc3429397 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:29:12 +0800
+Subject: [PATCH 2/7] allow override ro.* prop
+
+---
+ init/property_service.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index a89504e59..0ba7602e3 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -1047,6 +1047,8 @@ static void ProcessKernelCmdline() {
+             for_emulator = true;
+         } else if (StartsWith(key, "androidboot.")) {
+             InitPropertySet("ro.boot." + key.substr(12), value);
++        } else if (StartsWith(key, "ro.")) {
++            InitPropertySet(key, value);
+         }
+     });
+ 
+-- 
+2.34.1
+

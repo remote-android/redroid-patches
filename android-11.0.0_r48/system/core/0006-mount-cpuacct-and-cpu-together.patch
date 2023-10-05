@@ -1,0 +1,28 @@
+From 17a19be89f85e2d03123f9eb5661b397a78a1a63 Mon Sep 17 00:00:00 2001
+From: Tung <john@example.com>
+Date: Fri, 19 Aug 2022 10:07:23 +0800
+Subject: [PATCH 6/7] mount cpuacct and cpu together
+
+---
+ libprocessgroup/setup/cgroup_map_write.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/libprocessgroup/setup/cgroup_map_write.cpp b/libprocessgroup/setup/cgroup_map_write.cpp
+index 25f16a6e9..9ef9c1105 100644
+--- a/libprocessgroup/setup/cgroup_map_write.cpp
++++ b/libprocessgroup/setup/cgroup_map_write.cpp
+@@ -291,6 +291,11 @@ static bool SetupCgroup(const CgroupDescriptor& descriptor) {
+             result = mount("none", controller->path(), "cgroup", MS_NODEV | MS_NOEXEC | MS_NOSUID,
+                            controller->name());
+         }
++        if (result < 0 && (!strcmp(controller->name(), "cpu")
++                        || !strcmp(controller->name(), "cpuacct"))) {
++            result = mount("none", controller->path(), "cgroup", MS_NODEV | MS_NOEXEC | MS_NOSUID,
++                           "cpu,cpuacct");
++        }
+     }
+ 
+     if (result < 0) {
+-- 
+2.34.1
+

@@ -1,0 +1,26 @@
+From 945ad97a303cef1760cfd61a42768a513b5f17e8 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 6 Aug 2022 10:19:11 +0800
+Subject: [PATCH] fix remote-android/redroid-doc#42 ignore project quota error
+
+Change-Id: I97dc074c6e0119eeb1b2463839ee9cda5c7fa8b4
+---
+ Utils.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index 17921e8e..817f63c4 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -240,7 +240,7 @@ int SetQuotaProjectId(const std::string& path, long projectId) {
+     }
+ 
+     fsx.fsx_projid = projectId;
+-    return ioctl(fd, FS_IOC_FSSETXATTR, &fsx);
++    return (ioctl(fd, FS_IOC_FSSETXATTR, &fsx), 0);
+ }
+ 
+ int PrepareDirWithProjectId(const std::string& path, mode_t mode, uid_t uid, gid_t gid,
+-- 
+2.34.1
+

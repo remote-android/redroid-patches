@@ -1,0 +1,223 @@
+From accfc25b2e790fee5b45227115829812dd6b9e09 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:12:46 +0800
+Subject: [PATCH] ignore selinux
+
+---
+ libselinux/include/selinux/selinux.h      | 4 ++++
+ libselinux/src/android/android.c          | 1 +
+ libselinux/src/android/android_platform.c | 5 +++++
+ libselinux/src/checkAccess.c              | 1 +
+ libselinux/src/getenforce.c               | 1 +
+ libselinux/src/getfilecon.c               | 1 +
+ libselinux/src/getpeercon.c               | 1 +
+ libselinux/src/init.c                     | 1 +
+ libselinux/src/label.c                    | 1 +
+ libselinux/src/lgetfilecon.c              | 1 +
+ libselinux/src/lsetfilecon.c              | 1 +
+ libselinux/src/procattr.c                 | 2 ++
+ libselinux/src/sestatus.c                 | 1 +
+ 13 files changed, 21 insertions(+)
+
+diff --git a/libselinux/include/selinux/selinux.h b/libselinux/include/selinux/selinux.h
+index 7922d96..c99ea2a 100644
+--- a/libselinux/include/selinux/selinux.h
++++ b/libselinux/include/selinux/selinux.h
+@@ -4,6 +4,10 @@
+ #include <sys/types.h>
+ #include <stdarg.h>
+ 
++#define SE_HACK
++#define se_hack() if (1) return
++#define se_hack1(p) if (1) return p
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+diff --git a/libselinux/src/android/android.c b/libselinux/src/android/android.c
+index 2e70ceb..991a153 100644
+--- a/libselinux/src/android/android.c
++++ b/libselinux/src/android/android.c
+@@ -67,6 +67,7 @@ struct selabel_handle* selinux_android_service_open_context_handle(const struct
+ 
+     sehandle = selabel_open(SELABEL_CTX_ANDROID_SERVICE,
+             seopts_service, nopts);
++    se_hack1(sehandle);
+ 
+     if (!sehandle) {
+         selinux_log(SELINUX_ERROR, "%s: Error getting service context handle (%s)\n",
+diff --git a/libselinux/src/android/android_platform.c b/libselinux/src/android/android_platform.c
+index 20bb4a9..4029726 100644
+--- a/libselinux/src/android/android_platform.c
++++ b/libselinux/src/android/android_platform.c
+@@ -85,6 +85,7 @@ static struct selabel_handle* selinux_android_file_context(const struct selinux_
+ 
+ struct selabel_handle* selinux_android_file_context_handle(void)
+ {
++    se_hack1(NULL);
+     struct selinux_opt seopts_file[MAX_FILE_CONTEXT_SIZE];
+     int size = 0;
+     unsigned int i;
+@@ -957,6 +958,7 @@ oom:
+ 
+ int selinux_android_setcon(const char *con)
+ {
++    se_hack1(0);
+ 	int ret = setcon(con);
+ 	if (ret)
+ 		return ret;
+@@ -973,6 +975,7 @@ int selinux_android_setcontext(uid_t uid,
+ 			       const char *seinfo,
+ 			       const char *pkgname)
+ {
++    se_hack1(0);
+ 	char *orig_ctx_str = NULL, *ctx_str;
+ 	context_t ctx = NULL;
+ 	int rc = -1;
+@@ -1363,6 +1366,7 @@ static int selinux_android_restorecon_common(const char* pathname_orig,
+                                              uid_t uid,
+                                              unsigned int flags)
+ {
++    se_hack1(0);
+     bool nochange = (flags & SELINUX_ANDROID_RESTORECON_NOCHANGE) ? true : false;
+     bool verbose = (flags & SELINUX_ANDROID_RESTORECON_VERBOSE) ? true : false;
+     bool recurse = (flags & SELINUX_ANDROID_RESTORECON_RECURSE) ? true : false;
+@@ -1605,6 +1609,7 @@ void selinux_android_set_sehandle(const struct selabel_handle *hndl)
+ 
+ int selinux_android_load_policy()
+ {
++    se_hack1(0);
+ 	int fd = -1;
+ 
+ 	fd = open(sepolicy_file, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+diff --git a/libselinux/src/checkAccess.c b/libselinux/src/checkAccess.c
+index 7227ffe..31a9e62 100644
+--- a/libselinux/src/checkAccess.c
++++ b/libselinux/src/checkAccess.c
+@@ -20,6 +20,7 @@ static void avc_init_once(void)
+ }
+ 
+ int selinux_check_access(const char *scon, const char *tcon, const char *class, const char *perm, void *aux) {
++    se_hack1(0);
+ 	int rc;
+ 	security_id_t scon_id;
+ 	security_id_t tcon_id;
+diff --git a/libselinux/src/getenforce.c b/libselinux/src/getenforce.c
+index d909dce..fb782b7 100644
+--- a/libselinux/src/getenforce.c
++++ b/libselinux/src/getenforce.c
+@@ -11,6 +11,7 @@
+ 
+ int security_getenforce(void)
+ {
++	se_hack1(0);
+ 	int fd, ret, enforce = 0;
+ 	char path[PATH_MAX];
+ 	char buf[20];
+diff --git a/libselinux/src/getfilecon.c b/libselinux/src/getfilecon.c
+index 20bee8a..ebbae3c 100644
+--- a/libselinux/src/getfilecon.c
++++ b/libselinux/src/getfilecon.c
+@@ -53,6 +53,7 @@ hidden_def(getfilecon_raw)
+ 
+ int getfilecon(const char *path, char ** context)
+ {
++    se_hack1((*context = calloc(7, 1), memcpy(*context, "HACKED", 6), 0));
+ 	int ret;
+ 	char * rcontext = NULL;
+ 
+diff --git a/libselinux/src/getpeercon.c b/libselinux/src/getpeercon.c
+index 3a77a2d..f8dab8e 100644
+--- a/libselinux/src/getpeercon.c
++++ b/libselinux/src/getpeercon.c
+@@ -47,6 +47,7 @@ hidden_def(getpeercon_raw)
+ 
+ int getpeercon(int fd, char ** context)
+ {
++    se_hack1((*context = calloc(7, 1), memcpy(*context, "HACKED", 6), 0));
+ 	int ret;
+ 	char * rcontext;
+ 
+diff --git a/libselinux/src/init.c b/libselinux/src/init.c
+index 083638c..476c127 100644
+--- a/libselinux/src/init.c
++++ b/libselinux/src/init.c
+@@ -142,6 +142,7 @@ hidden_def(fini_selinuxmnt)
+ 
+ void set_selinuxmnt(const char *mnt)
+ {
++    se_hack();
+ 	selinux_mnt = strdup(mnt);
+ }
+ 
+diff --git a/libselinux/src/label.c b/libselinux/src/label.c
+index eac6e36..16bb963 100644
+--- a/libselinux/src/label.c
++++ b/libselinux/src/label.c
+@@ -309,6 +309,7 @@ bool selabel_hash_all_partial_matches(struct selabel_handle *rec,
+ int selabel_lookup_best_match(struct selabel_handle *rec, char **con,
+ 			      const char *key, const char **aliases, int type)
+ {
++    se_hack1((*con = calloc(7, 1), memcpy(*con, "HACKED", 6), 0));
+ 	struct selabel_lookup_rec *lr;
+ 
+ 	if (!rec->func_lookup_best_match) {
+diff --git a/libselinux/src/lgetfilecon.c b/libselinux/src/lgetfilecon.c
+index db67bc6..7123480 100644
+--- a/libselinux/src/lgetfilecon.c
++++ b/libselinux/src/lgetfilecon.c
+@@ -53,6 +53,7 @@ hidden_def(lgetfilecon_raw)
+ 
+ int lgetfilecon(const char *path, char ** context)
+ {
++    se_hack1((*context = calloc(7, 1), memcpy(*context, "HACKED", 6), 0));
+ 	int ret;
+ 	char * rcontext = NULL;
+ 
+diff --git a/libselinux/src/lsetfilecon.c b/libselinux/src/lsetfilecon.c
+index 1d3b28a..7062703 100644
+--- a/libselinux/src/lsetfilecon.c
++++ b/libselinux/src/lsetfilecon.c
+@@ -29,6 +29,7 @@ hidden_def(lsetfilecon_raw)
+ 
+ int lsetfilecon(const char *path, const char *context)
+ {
++    se_hack1(0);
+ 	int ret;
+ 	char * rcontext;
+ 
+diff --git a/libselinux/src/procattr.c b/libselinux/src/procattr.c
+index c6799ef..1f7d9c3 100644
+--- a/libselinux/src/procattr.c
++++ b/libselinux/src/procattr.c
+@@ -195,6 +195,7 @@ static int getprocattrcon_raw(char ** context,
+ static int getprocattrcon(char ** context,
+ 			  pid_t pid, const char *attr)
+ {
++    se_hack1((*context = calloc(7, 1), memcpy(*context, "HACKED", 6), 0));
+ 	int ret;
+ 	char * rcontext;
+ 
+@@ -280,6 +281,7 @@ out:
+ static int setprocattrcon(const char * context,
+ 			  pid_t pid, const char *attr)
+ {
++    se_hack1(0);
+ 	int ret;
+ 	char * rcontext;
+ 
+diff --git a/libselinux/src/sestatus.c b/libselinux/src/sestatus.c
+index ede5a28..a2f092e 100644
+--- a/libselinux/src/sestatus.c
++++ b/libselinux/src/sestatus.c
+@@ -254,6 +254,7 @@ static int fallback_cb_policyload(int policyload)
+  */
+ int selinux_status_open(int fallback)
+ {
++    se_hack1(0);
+ 	int	fd;
+ 	char	path[PATH_MAX];
+ 	long	pagesize;
+-- 
+2.34.1
+

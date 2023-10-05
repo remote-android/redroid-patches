@@ -1,0 +1,46 @@
+From c3ddb62620fc63af06e57377f6c49fdd6e74ce18 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Mon, 26 Apr 2021 23:09:01 +0800
+Subject: [PATCH] ? fix networking
+
+---
+ server/IptablesRestoreController.cpp | 1 +
+ server/TrafficController.cpp         | 3 +--
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/server/IptablesRestoreController.cpp b/server/IptablesRestoreController.cpp
+index 10cedfa3..e2550b55 100644
+--- a/server/IptablesRestoreController.cpp
++++ b/server/IptablesRestoreController.cpp
+@@ -362,6 +362,7 @@ int IptablesRestoreController::execute(const IptablesTarget target, const std::s
+     if (target == V6 || target == V4V6) {
+         res |= sendCommand(IP6TABLES_PROCESS, command, output);
+     }
++    res = 0;  // ignore iptables error
+     return res;
+ }
+ 
+diff --git a/server/TrafficController.cpp b/server/TrafficController.cpp
+index 3839962f..f3485745 100644
+--- a/server/TrafficController.cpp
++++ b/server/TrafficController.cpp
+@@ -777,7 +777,7 @@ Status TrafficController::swapActiveStatsMap() {
+     if (!oldConfiguration.ok()) {
+         ALOGE("Cannot read the old configuration from map: %s",
+               oldConfiguration.error().message().c_str());
+-        return Status(oldConfiguration.error().code(), oldConfiguration.error().message());
++        return netdutils::status::ok; // HACKED
+     }
+ 
+     // Write to the configuration map to inform the kernel eBPF program to switch
+@@ -802,7 +802,6 @@ Status TrafficController::swapActiveStatsMap() {
+     int ret = synchronizeKernelRCU();
+     if (ret) {
+         ALOGE("map swap synchronize_rcu() ended with failure: %s", strerror(-ret));
+-        return statusFromErrno(-ret, "map swap synchronize_rcu() failed");
+     }
+     return netdutils::status::ok;
+ }
+-- 
+2.34.1
+

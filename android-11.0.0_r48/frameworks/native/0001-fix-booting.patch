@@ -1,0 +1,45 @@
+From 49c46872df11d334a46b87bb579e3a19bbcebf0c Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:01:00 +0800
+Subject: [PATCH] fix booting
+
+---
+ libs/binder/Binder.cpp       | 1 +
+ libs/binder/ProcessState.cpp | 3 +++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/libs/binder/Binder.cpp b/libs/binder/Binder.cpp
+index 6ca3b16324..b90fa1bb7a 100644
+--- a/libs/binder/Binder.cpp
++++ b/libs/binder/Binder.cpp
+@@ -261,6 +261,7 @@ bool BBinder::isRequestingSid()
+ 
+ void BBinder::setRequestingSid(bool requestingSid)
+ {
++    requestingSid = false; // HACKED
+     Extras* e = mExtras.load(std::memory_order_acquire);
+ 
+     if (!e) {
+diff --git a/libs/binder/ProcessState.cpp b/libs/binder/ProcessState.cpp
+index 4b773e816f..3f30c08ffe 100644
+--- a/libs/binder/ProcessState.cpp
++++ b/libs/binder/ProcessState.cpp
+@@ -138,12 +138,15 @@ bool ProcessState::becomeContextManager(context_check_func checkFunc, void* user
+     mBinderContextCheckFunc = checkFunc;
+     mBinderContextUserData = userData;
+ 
++#if 0 // HACKED (?)
+     flat_binder_object obj {
+         .flags = FLAT_BINDER_FLAG_TXN_SECURITY_CTX,
+     };
+ 
+     int result = ioctl(mDriverFD, BINDER_SET_CONTEXT_MGR_EXT, &obj);
++#endif
+ 
++    status_t result = 1;
+     // fallback to original method
+     if (result != 0) {
+         android_errorWriteLog(0x534e4554, "121035042");
+-- 
+2.34.1
+

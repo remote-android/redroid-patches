@@ -1,0 +1,25 @@
+From 535d331cfbbdb3e4c4ab36911d04127ce877f157 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Tue, 16 Nov 2021 01:30:29 +0800
+Subject: [PATCH 1/2] fix booting
+
+---
+ .../SystemUI/src/com/android/systemui/BatteryMeterView.java     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java b/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
+index fc30be416c0f..486c00f1eae2 100644
+--- a/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
++++ b/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
+@@ -386,7 +386,7 @@ public class BatteryMeterView extends LinearLayout implements
+     }
+ 
+     private void setPercentTextAtCurrentLevel() {
+-        mBatteryPercentView.setText(
++        if (mBatteryPercentView != null) mBatteryPercentView.setText(
+                 NumberFormat.getPercentInstance().format(mLevel / 100f));
+         setContentDescription(
+                 getContext().getString(mCharging ? R.string.accessibility_battery_level_charging
+-- 
+2.34.1
+

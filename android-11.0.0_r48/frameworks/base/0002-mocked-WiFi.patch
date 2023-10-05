@@ -1,0 +1,24 @@
+From e3b83668686b1f79f86cc046d80e805676f5229c Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Wed, 4 May 2022 22:03:51 +0800
+Subject: [PATCH 2/2] mocked WiFi
+
+---
+ core/java/android/net/ConnectivityManager.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/java/android/net/ConnectivityManager.java b/core/java/android/net/ConnectivityManager.java
+index ed03f5198d6f..43505179e5de 100644
+--- a/core/java/android/net/ConnectivityManager.java
++++ b/core/java/android/net/ConnectivityManager.java
+@@ -1200,6 +1200,7 @@ public class ConnectivityManager {
+     @Nullable
+     public NetworkInfo getNetworkInfo(int networkType) {
+         try {
++            if (networkType == ConnectivityManager.TYPE_WIFI) networkType = ConnectivityManager.TYPE_ETHERNET;
+             return mService.getNetworkInfo(networkType);
+         } catch (RemoteException e) {
+             throw e.rethrowFromSystemServer();
+-- 
+2.34.1
+

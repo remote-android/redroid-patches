@@ -1,0 +1,48 @@
+From 58f9b29cf0cba770e5619ed8a187fdb4afe242eb Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Mon, 20 Sep 2021 18:22:20 +0000
+Subject: [PATCH] video playback workaround
+
+---
+ media/libstagefright/colorconversion/SoftwareRenderer.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/media/libstagefright/colorconversion/SoftwareRenderer.cpp b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+index 4711315615..af596e8168 100644
+--- a/media/libstagefright/colorconversion/SoftwareRenderer.cpp
++++ b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+@@ -130,6 +130,7 @@ void SoftwareRenderer::resetFormatIfChanged(
+     // hardware has YUV12 and RGBA8888 support, so convert known formats
+     {
+         switch (mColorFormat) {
++#if 0 // HACKED
+             case OMX_COLOR_FormatYUV420Planar:
+             case OMX_COLOR_FormatYUV420SemiPlanar:
+             case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
+@@ -139,6 +140,7 @@ void SoftwareRenderer::resetFormatIfChanged(
+                 bufHeight = (mCropHeight + 1) & ~1;
+                 break;
+             }
++#endif
+             case OMX_COLOR_Format24bitRGB888:
+             {
+                 halFormat = HAL_PIXEL_FORMAT_RGB_888;
+@@ -154,6 +156,7 @@ void SoftwareRenderer::resetFormatIfChanged(
+                 bufHeight = (mCropHeight + 1) & ~1;
+                 break;
+             }
++#if 0 // HACKED
+             case OMX_COLOR_FormatYUV420Planar16:
+             {
+                 if (((dataSpace & HAL_DATASPACE_STANDARD_MASK) == HAL_DATASPACE_STANDARD_BT2020)
+@@ -170,6 +173,7 @@ void SoftwareRenderer::resetFormatIfChanged(
+                 bufHeight = (mCropHeight + 1) & ~1;
+                 break;
+             }
++#endif
+             default:
+             {
+                 break;
+-- 
+2.34.1
+
