@@ -1,0 +1,37 @@
+From c24c8901a872cdef8fce2257105ffa74e876c09c Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 2 Jan 2022 16:40:35 +0800
+Subject: [PATCH 6/7] skip coldboot
+
+---
+ init/first_stage_init.cpp | 1 -
+ rootdir/init.rc           | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index a09330cf7..a669c29be 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -118,7 +118,6 @@ int FirstStageMain(int argc, char** argv) {
+     CHECKCALL(setenv("PATH", _PATH_DEFPATH, 1));
+     // Get the basic filesystem setup we need put together in the initramdisk
+     // on / and then we'll let the rc file figure out the rest.
+-    CHECKCALL(mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755"));
+     CHECKCALL(mkdir("/dev/pts", 0755));
+     CHECKCALL(mkdir("/dev/socket", 0755));
+     mount("/system/etc", "/etc", "none", MS_BIND, NULL); // cgroup fix
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 92c984ea3..9636ab761 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -32,6 +32,7 @@ on early-init
+     # cgroup for system_server and surfaceflinger
+     mkdir /dev/memcg/system 0550 system system
+ 
++    write /dev/.coldboot_done 1
+     start ueventd
+ 
+     # Run apexd-bootstrap so that APEXes that provide critical libraries
+-- 
+2.34.1
+

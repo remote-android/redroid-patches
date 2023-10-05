@@ -1,0 +1,134 @@
+From f34a4d3ad44221ab649b33aaaf3219a4fb3b156f Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:27:12 +0800
+Subject: [PATCH 1/7] fix booting
+
+---
+ init/first_stage_init.cpp | 18 +++++++++++++++---
+ init/init.cpp             |  2 +-
+ init/property_service.cpp |  0
+ init/service.cpp          |  3 ++-
+ init/util.cpp             |  3 ++-
+ rootdir/init.rc           |  1 -
+ 6 files changed, 20 insertions(+), 7 deletions(-)
+ mode change 100644 => 100755 init/init.cpp
+ mode change 100644 => 100755 init/property_service.cpp
+
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index 2b899408a..a09330cf7 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -33,6 +33,7 @@
+ #include <android-base/chrono_utils.h>
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
++#include <android-base/strings.h>
+ #include <private/android_filesystem_config.h>
+ 
+ #include "debug_ramdisk.h"
+@@ -120,6 +121,8 @@ int FirstStageMain(int argc, char** argv) {
+     CHECKCALL(mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755"));
+     CHECKCALL(mkdir("/dev/pts", 0755));
+     CHECKCALL(mkdir("/dev/socket", 0755));
++    mount("/system/etc", "/etc", "none", MS_BIND, NULL); // cgroup fix
++    unshare(CLONE_NEWCGROUP);
+     CHECKCALL(mount("devpts", "/dev/pts", "devpts", 0, NULL));
+ #define MAKE_STR(x) __STRING(x)
+     CHECKCALL(mount("proc", "/proc", "proc", 0, "hidepid=2,gid=" MAKE_STR(AID_READPROC)));
+@@ -176,7 +179,6 @@ int FirstStageMain(int argc, char** argv) {
+         for (const auto& [error_string, error_errno] : errors) {
+             LOG(ERROR) << error_string << " " << strerror(error_errno);
+         }
+-        LOG(FATAL) << "Init encountered errors starting first stage, aborting";
+     }
+ 
+     LOG(INFO) << "init first stage started!";
+@@ -236,8 +238,18 @@ int FirstStageMain(int argc, char** argv) {
+     setenv("INIT_STARTED_AT", std::to_string(start_ms).c_str(), 1);
+ 
+     const char* path = "/system/bin/init";
+-    const char* args[] = {path, "selinux_setup", nullptr};
+-    execv(path, const_cast<char**>(args));
++    std::vector<const char *> args = {path, "second_stage"};
++    std::string cmdline;
++    android::base::ReadFileToString("/proc/self/cmdline", &cmdline);
++    std::replace(cmdline.begin(), cmdline.end(), '\0', ' ');
++    auto cmd_vector = android::base::Split(android::base::Trim(cmdline), " ");
++    int i = 0;
++    for (const auto& entry : cmd_vector) {
++        if (i++ == 0) continue; // ignore first arg '/init'
++        args.push_back(entry.c_str());
++    }
++    args.push_back(nullptr);
++    execv(path, const_cast<char**>(args.data()));
+ 
+     // execv() only returns if an error happened, in which case we
+     // panic and never fall through this conditional.
+diff --git a/init/init.cpp b/init/init.cpp
+old mode 100644
+new mode 100755
+index 6b03bc94d..7d687ed52
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -653,7 +653,7 @@ int SecondStageMain(int argc, char** argv) {
+ 
+     // Make the time that init started available for bootstat to log.
+     property_set("ro.boottime.init", getenv("INIT_STARTED_AT"));
+-    property_set("ro.boottime.init.selinux", getenv("INIT_SELINUX_TOOK"));
++    property_set("ro.boottime.init.selinux", "0" /*getenv("INIT_SELINUX_TOOK")*/); // HACKED
+ 
+     // Set libavb version for Framework-only OTA match in Treble build.
+     const char* avb_version = getenv("INIT_AVB_VERSION");
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+old mode 100644
+new mode 100755
+diff --git a/init/service.cpp b/init/service.cpp
+index ccc37b70c..410310893 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -71,6 +71,7 @@ namespace android {
+ namespace init {
+ 
+ static Result<std::string> ComputeContextFromExecutable(const std::string& service_path) {
++    se_hack1("HACKED");
+     std::string computed_context;
+ 
+     char* raw_con = nullptr;
+@@ -381,7 +382,7 @@ void Service::Reap(const siginfo_t& siginfo) {
+             if (++crash_count_ > 4) {
+                 if (flags_ & SVC_CRITICAL) {
+                     // Aborts into bootloader
+-                    LOG(FATAL) << "critical process '" << name_ << "' exited 4 times "
++                    LOG(ERROR) << "critical process '" << name_ << "' exited 4 times "
+                                << (boot_completed ? "in 4 minutes" : "before boot completed");
+                 } else {
+                     LOG(ERROR) << "updatable process '" << name_ << "' exited 4 times "
+diff --git a/init/util.cpp b/init/util.cpp
+index 63d2d4442..509f0998a 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -241,7 +241,8 @@ int wait_for_file(const char* filename, std::chrono::nanoseconds timeout) {
+ void import_kernel_cmdline(bool in_qemu,
+                            const std::function<void(const std::string&, const std::string&, bool)>& fn) {
+     std::string cmdline;
+-    android::base::ReadFileToString("/proc/cmdline", &cmdline);
++    android::base::ReadFileToString("/proc/self/cmdline", &cmdline); // HACKED
++    std::replace(cmdline.begin(), cmdline.end(), '\0', ' '); // HACKED
+ 
+     for (const auto& entry : android::base::Split(android::base::Trim(cmdline), " ")) {
+         std::vector<std::string> pieces = android::base::Split(entry, "=");
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 893998cee..92c984ea3 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -354,7 +354,6 @@ on post-fs
+ 
+     # Once everything is setup, no need to modify /.
+     # The bind+remount combination allows this to work in containers.
+-    mount rootfs rootfs / remount bind ro nodev
+     # Mount default storage into root namespace
+     mount none /mnt/runtime/default /storage bind rec
+     mount none none /storage slave rec
+-- 
+2.34.1
+

@@ -1,0 +1,24 @@
+From 6f2422baaf0bfae1269661bf0c8b541247f90f52 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 15 Oct 2022 09:12:31 +0800
+Subject: [PATCH] ignore compatibility check
+
+---
+ VintfObject.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/VintfObject.cpp b/VintfObject.cpp
+index 2badd18..705fd64 100644
+--- a/VintfObject.cpp
++++ b/VintfObject.cpp
+@@ -599,7 +599,6 @@ int32_t VintfObject::checkCompatibility(std::string* error, CheckFlags::Type fla
+                 error->insert(0,
+                               "Runtime info and framework compatibility matrix are incompatible: ");
+             }
+-            return INCOMPATIBLE;
+         }
+     }
+ 
+-- 
+2.34.1
+

@@ -1,0 +1,106 @@
+From 9653dd065fdbd99b058f0d9e09b46b6bd5d68896 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 22:04:12 +0800
+Subject: [PATCH 1/2] fix booting
+
+---
+ core/jni/android_os_SELinux.cpp                            | 7 +++++++
+ core/jni/android_os_VintfObject.cpp                        | 2 ++
+ .../android/server/net/NetworkPolicyManagerService.java    | 1 +
+ 3 files changed, 10 insertions(+)
+
+diff --git a/core/jni/android_os_SELinux.cpp b/core/jni/android_os_SELinux.cpp
+index 236ee6123cd..0ba320f4668 100644
+--- a/core/jni/android_os_SELinux.cpp
++++ b/core/jni/android_os_SELinux.cpp
+@@ -81,6 +81,7 @@ static jboolean isSELinuxEnforced(JNIEnv *env, jobject) {
+ }
+ 
+ static jstring fileSelabelLookup(JNIEnv* env, jobject, jstring pathStr) {
++    se_hack1(env->NewStringUTF("HACKED"));
+     if (isSELinuxDisabled) {
+         ALOGE("fileSelabelLookup => SELinux is disabled");
+         return NULL;
+@@ -119,6 +120,7 @@ static jstring fileSelabelLookup(JNIEnv* env, jobject, jstring pathStr) {
+ }
+ 
+ static jstring getFdConInner(JNIEnv *env, jobject fileDescriptor, bool isSocket) {
++    se_hack1(env->NewStringUTF("HACKED"));
+     if (isSELinuxDisabled) {
+         return NULL;
+     }
+@@ -187,6 +189,7 @@ static jstring getFdCon(JNIEnv *env, jobject, jobject fileDescriptor) {
+  * Exception: none
+  */
+ static jboolean setFSCreateCon(JNIEnv *env, jobject, jstring contextStr) {
++    se_hack1(true);
+     if (isSELinuxDisabled) {
+         return false;
+     }
+@@ -218,6 +221,7 @@ static jboolean setFSCreateCon(JNIEnv *env, jobject, jstring contextStr) {
+  * Exception: NullPointerException is thrown if either path or context strign are NULL
+  */
+ static jboolean setFileCon(JNIEnv *env, jobject, jstring pathStr, jstring contextStr) {
++    se_hack1(true);
+     if (isSELinuxDisabled) {
+         return false;
+     }
+@@ -251,6 +255,7 @@ static jboolean setFileCon(JNIEnv *env, jobject, jstring pathStr, jstring contex
+  * Exceptions: NullPointerException if the path object is null
+  */
+ static jstring getFileCon(JNIEnv *env, jobject, jstring pathStr) {
++    se_hack1(env->NewStringUTF("HACKED"));
+     if (isSELinuxDisabled) {
+         return NULL;
+     }
+@@ -282,6 +287,7 @@ static jstring getFileCon(JNIEnv *env, jobject, jstring pathStr) {
+  * Exceptions: none
+  */
+ static jstring getCon(JNIEnv *env, jobject) {
++    se_hack1(env->NewStringUTF("HACKED"));
+     if (isSELinuxDisabled) {
+         return NULL;
+     }
+@@ -309,6 +315,7 @@ static jstring getCon(JNIEnv *env, jobject) {
+  * Exceptions: none
+  */
+ static jstring getPidCon(JNIEnv *env, jobject, jint pid) {
++    se_hack1(env->NewStringUTF("HACKED"));
+     if (isSELinuxDisabled) {
+         return NULL;
+     }
+diff --git a/core/jni/android_os_VintfObject.cpp b/core/jni/android_os_VintfObject.cpp
+index ee11b6162db..9ebcf398f6a 100644
+--- a/core/jni/android_os_VintfObject.cpp
++++ b/core/jni/android_os_VintfObject.cpp
+@@ -97,6 +97,7 @@ static jobjectArray android_os_VintfObject_report(JNIEnv* env, jclass)
+ }
+ 
+ static jint android_os_VintfObject_verify(JNIEnv* env, jclass, jobjectArray packageInfo) {
++    if (env) return 0; // HACKED, no kernel
+     std::vector<std::string> cPackageInfo;
+     if (packageInfo) {
+         size_t count = env->GetArrayLength(packageInfo);
+@@ -116,6 +117,7 @@ static jint android_os_VintfObject_verify(JNIEnv* env, jclass, jobjectArray pack
+ }
+ 
+ static jint android_os_VintfObject_verifyWithoutAvb(JNIEnv* env, jclass) {
++    if (env) return 0; // HACKED, no kernel
+     std::string error;
+     int32_t status = VintfObject::CheckCompatibility({}, &error,
+             ::android::vintf::CheckFlags::DISABLE_AVB_CHECK);
+diff --git a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+index 6c34e1313f7..55bde658e12 100644
+--- a/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
++++ b/services/core/java/com/android/server/net/NetworkPolicyManagerService.java
+@@ -729,6 +729,7 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
+             Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
+             if (!isBandwidthControlEnabled()) {
+                 Slog.w(TAG, "bandwidth controls disabled, unable to enforce policy");
++                initCompleteSignal.countDown(); // HACKED (?)
+                 return;
+             }
+ 
+-- 
+2.34.1
+

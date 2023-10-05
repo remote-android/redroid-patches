@@ -1,0 +1,32 @@
+From 548cc1ca5b41507a1fb4babef74623cdfac6775b Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 26 Jun 2021 12:22:54 +0000
+Subject: [PATCH 5/7] ignore powerctl
+
+---
+ init/init.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 661deac03..75107cf19 100755
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -180,6 +180,7 @@ void property_changed(const std::string& name, const std::string& value) {
+     // waiting on a property.
+     // In non-thermal-shutdown case, 'shutdown' trigger will be fired to let device specific
+     // commands to be executed.
++#if 0 // HACKED
+     if (name == "sys.powerctl") {
+         // Despite the above comment, we can't call HandlePowerctlMessage() in this function,
+         // because it modifies the contents of the action queue, which can cause the action queue
+@@ -192,6 +193,7 @@ void property_changed(const std::string& name, const std::string& value) {
+         shutdown_command = value;
+         do_shutdown = true;
+     }
++#endif
+ 
+     if (property_triggers_enabled) ActionManager::GetInstance().QueuePropertyChange(name, value);
+ 
+-- 
+2.34.1
+

@@ -1,0 +1,66 @@
+From ccc25478ae016d064fa7cebece6cf2bba1f3babc Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:01:00 +0800
+Subject: [PATCH] fix booting
+
+---
+ cmds/servicemanager/binder.c | 3 +++
+ libs/binder/Binder.cpp       | 1 +
+ libs/binder/ProcessState.cpp | 3 +++
+ 3 files changed, 7 insertions(+)
+
+diff --git a/cmds/servicemanager/binder.c b/cmds/servicemanager/binder.c
+index cf3b1728b..9c1eea4d5 100644
+--- a/cmds/servicemanager/binder.c
++++ b/cmds/servicemanager/binder.c
+@@ -146,12 +146,15 @@ void binder_close(struct binder_state *bs)
+ 
+ int binder_become_context_manager(struct binder_state *bs)
+ {
++#if 0 // HACKED
+     struct flat_binder_object obj;
+     memset(&obj, 0, sizeof(obj));
+     obj.flags = FLAT_BINDER_FLAG_TXN_SECURITY_CTX;
+ 
+     int result = ioctl(bs->fd, BINDER_SET_CONTEXT_MGR_EXT, &obj);
++#endif
+ 
++    int result = 1;
+     // fallback to original method
+     if (result != 0) {
+         android_errorWriteLog(0x534e4554, "121035042");
+diff --git a/libs/binder/Binder.cpp b/libs/binder/Binder.cpp
+index cb0e08d12..5c53585e9 100644
+--- a/libs/binder/Binder.cpp
++++ b/libs/binder/Binder.cpp
+@@ -206,6 +206,7 @@ bool BBinder::isRequestingSid()
+ 
+ void BBinder::setRequestingSid(bool requestingSid)
+ {
++    requestingSid = false; // HACKED
+     Extras* e = mExtras.load(std::memory_order_acquire);
+ 
+     if (!e) {
+diff --git a/libs/binder/ProcessState.cpp b/libs/binder/ProcessState.cpp
+index 63f49ddba..084f91a32 100644
+--- a/libs/binder/ProcessState.cpp
++++ b/libs/binder/ProcessState.cpp
+@@ -181,12 +181,15 @@ bool ProcessState::becomeContextManager(context_check_func checkFunc, void* user
+         mBinderContextCheckFunc = checkFunc;
+         mBinderContextUserData = userData;
+ 
++#if 0 // HACKED (?)
+         flat_binder_object obj {
+             .flags = FLAT_BINDER_FLAG_TXN_SECURITY_CTX,
+         };
+ 
+         status_t result = ioctl(mDriverFD, BINDER_SET_CONTEXT_MGR_EXT, &obj);
++#endif
+ 
++        status_t result = 1;
+         // fallback to original method
+         if (result != 0) {
+             android_errorWriteLog(0x534e4554, "121035042");
+-- 
+2.34.1
+

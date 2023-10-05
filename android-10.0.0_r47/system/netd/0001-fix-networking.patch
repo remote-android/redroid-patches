@@ -1,0 +1,24 @@
+From fe30466e921daba99c1a600809ae009d48ca7f8d Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Mon, 26 Apr 2021 23:09:01 +0800
+Subject: [PATCH] ? fix networking
+
+---
+ server/IptablesRestoreController.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/server/IptablesRestoreController.cpp b/server/IptablesRestoreController.cpp
+index 83391776..0acecbae 100644
+--- a/server/IptablesRestoreController.cpp
++++ b/server/IptablesRestoreController.cpp
+@@ -363,6 +363,7 @@ int IptablesRestoreController::execute(const IptablesTarget target, const std::s
+     if (target == V6 || target == V4V6) {
+         res |= sendCommand(IP6TABLES_PROCESS, command, output);
+     }
++    res = 0; // HACKED ?
+     return res;
+ }
+ 
+-- 
+2.34.1
+
