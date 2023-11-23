@@ -1,0 +1,26 @@
+From 2c2a8f8bc76ec6cc8c4d96b693c9bf896d1e4e64 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 23 Nov 2023 21:10:13 +0800
+Subject: [PATCH] fix art crash on some kernels
+
+Change-Id: I8162210b8eaaa38e2d7dc74a7897187b802051c4
+---
+ runtime/gc/space/image_space.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/runtime/gc/space/image_space.cc b/runtime/gc/space/image_space.cc
+index fa68481..775e946 100644
+--- a/runtime/gc/space/image_space.cc
++++ b/runtime/gc/space/image_space.cc
+@@ -1635,7 +1635,7 @@ std::unique_ptr<ImageSpace> ImageSpace::CreateBootImage(const char* image_locati
+     } else if (secondary_image) {
+       // We really want a working image. Prune and restart.
+       PruneDalvikCache(image_isa);
+-      _exit(1);
++      local_error_msg = "Cannot patch a secondary image.";
+     } else if (ImageCreationAllowed(is_global_cache, image_isa, &local_error_msg)) {
+       bool patch_success =
+           RelocateImage(image_location, dalvik_cache.c_str(), image_isa, &local_error_msg);
+-- 
+2.34.1
+
