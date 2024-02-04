@@ -25,10 +25,15 @@ if [ ! -d $patch_dir ];then
     exit 1
 fi
 
+echo "Begin to apply patches from $patch_dir"
 cd $patch_dir
-for p in `find * -links 2`
+pwd
+for p in `find *`
 do
-    echo
-    echo "process project: $p"
-    git -C $src/$p am --reject $patch_dir/$p/* || echo "*****[ERROR]***** apply failed: $p"
+    # if this is a patch file that ends with .patch
+    if [[ $p == *.patch ]]; then
+        project_dir=$(dirname $p)
+        echo "process project: $project_dir"
+        git -C $src/$project_dir apply --reject $patch_dir/$p || echo "*****[ERROR]***** apply failed: $p"
+    fi
 done
