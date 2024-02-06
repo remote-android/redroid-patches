@@ -26,7 +26,8 @@ if [ ! -d $patch_dir ];then
 fi
 
 cd $patch_dir
-for p in `find * -links 2`
+leaf_dirs=$(find . -type d -exec sh -c '(ls -p "{}" | grep / > /dev/null) || echo "{}"' \;)
+for p in $leaf_dirs
 do
     echo
     echo "process project: $p"
