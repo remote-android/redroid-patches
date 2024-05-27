@@ -1,0 +1,24 @@
+From a0c6134bf904e4a81a6782a8965f2de6280f86ec Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 5 Oct 2023 22:18:09 +0800
+Subject: [PATCH] fix booting
+
+---
+ service/jni/com_android_server_connectivity_ClatCoordinator.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
+index 059b716..79f5270 100644
+--- a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
++++ b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
+@@ -143,6 +143,7 @@ static void verifyClatPerms() {
+         return;
+     }
+ 
++    fatal = false; // HACKED
+     if (fatal) abort();
+ }
+ 
+-- 
+2.45.1
+
