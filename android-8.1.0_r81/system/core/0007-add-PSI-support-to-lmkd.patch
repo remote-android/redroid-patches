@@ -1,20 +1,18 @@
-From ddc5000ccc1a63b55657d9dd827404256c3a1f49 Mon Sep 17 00:00:00 2001
+From 00074ee13c6be9a0710fb8f46dd0731bf7444f81 Mon Sep 17 00:00:00 2001
 From: Ziyang Zhou <ziyang.zhou@outlook.com>
 Date: Sat, 4 Nov 2023 10:24:11 +0800
 Subject: [PATCH] add PSI support to lmkd
 
 ---
- .../private/android_filesystem_config.h       |    1 +
- lmkd/Android.bp                               |   10 +-
- lmkd/event.logtags                            |   38 +
- lmkd/include/lmkd.h                           |  193 ++
- lmkd/libpsi/Android.bp                        |   22 +
- lmkd/libpsi/OWNERS                            |    1 +
- lmkd/libpsi/include/psi/psi.h                 |   68 +
- lmkd/libpsi/psi.c                             |   99 +
- lmkd/lmkd.c                                   | 1745 ++++++++++++++---
- lmkd/lmkd.rc                                  |    4 +-
- 10 files changed, 1899 insertions(+), 282 deletions(-)
+ lmkd/Android.bp               |   10 +-
+ lmkd/event.logtags            |   38 +
+ lmkd/include/lmkd.h           |  193 ++++
+ lmkd/libpsi/Android.bp        |   22 +
+ lmkd/libpsi/OWNERS            |    1 +
+ lmkd/libpsi/include/psi/psi.h |   68 ++
+ lmkd/libpsi/psi.c             |   99 ++
+ lmkd/lmkd.c                   | 1745 +++++++++++++++++++++++++++------
+ 8 files changed, 1895 insertions(+), 281 deletions(-)
  create mode 100644 lmkd/event.logtags
  create mode 100644 lmkd/include/lmkd.h
  create mode 100644 lmkd/libpsi/Android.bp
@@ -22,18 +20,6 @@ Subject: [PATCH] add PSI support to lmkd
  create mode 100644 lmkd/libpsi/include/psi/psi.h
  create mode 100644 lmkd/libpsi/psi.c
 
-diff --git a/libcutils/include/private/android_filesystem_config.h b/libcutils/include/private/android_filesystem_config.h
-index d4ba01963..f67d233d6 100644
---- a/libcutils/include/private/android_filesystem_config.h
-+++ b/libcutils/include/private/android_filesystem_config.h
-@@ -120,6 +120,7 @@
- #define AID_ESE 1060             /* embedded secure element (eSE) subsystem */
- #define AID_OTA_UPDATE 1061      /* resource tracking UID for OTA updates */
- #define AID_AUTOMOTIVE_EVS 1062  /* Automotive rear and surround view system */
-+#define AID_LMKD 1069            /* low memory killer daemon */
- /* Changes to this file must be made in AOSP, *not* in internal branches. */
- 
- #define AID_SHELL 2000 /* adb and debug shell user */
 diff --git a/lmkd/Android.bp b/lmkd/Android.bp
 index 3f8a5035f..0f4789774 100644
 --- a/lmkd/Android.bp
@@ -2714,20 +2700,6 @@ index 5cfa2c887..3a42784bc 100644
  
      ALOGI("exiting");
      return 0;
-diff --git a/lmkd/lmkd.rc b/lmkd/lmkd.rc
-index 3bb84abf6..76b60558a 100644
---- a/lmkd/lmkd.rc
-+++ b/lmkd/lmkd.rc
-@@ -1,6 +1,8 @@
- service lmkd /system/bin/lmkd
-     class core
--    group root readproc
-+    user lmkd
-+    group lmkd system readproc
-+    capabilities DAC_OVERRIDE KILL IPC_LOCK SYS_NICE SYS_RESOURCE
-     critical
-     socket lmkd seqpacket 0660 system system
-     writepid /dev/cpuset/system-background/tasks
 -- 
-2.34.1
+2.45.1
 
