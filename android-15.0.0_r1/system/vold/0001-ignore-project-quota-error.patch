@@ -1,0 +1,24 @@
+From 29840226e77a8d6381b4003d9474bfb2266a1495 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 6 Aug 2022 10:19:11 +0800
+Subject: [PATCH] ignore project quota error
+
+---
+ Utils.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index 696b0b4..42f05a1 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -246,7 +246,6 @@ int SetQuotaProjectId(const std::string& path, long projectId) {
+     ret = ioctl(fd, FS_IOC_FSSETXATTR, &fsx);
+     if (ret == -1) {
+         PLOG(ERROR) << "Failed to set project id on " << path;
+-        return ret;
+     }
+     return 0;
+ }
+-- 
+2.45.1
+

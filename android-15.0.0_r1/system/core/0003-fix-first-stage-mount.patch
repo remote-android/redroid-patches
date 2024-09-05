@@ -1,0 +1,35 @@
+From 431d86122b202e0bcd1464b910f55ad75af06556 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 27 Jun 2021 09:49:22 +0000
+Subject: [PATCH 3/7] ? fix first stage mount
+
+---
+ init/first_stage_init.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index e918016..94faf87 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -511,6 +511,7 @@ int FirstStageMain(int argc, char** argv) {
+         if (!fsm) {
+             fsm = CreateFirstStageMount(cmdline);
+         }
++        #if 0
+         if (!fsm) {
+             LOG(FATAL) << "FirstStageMount not available";
+         }
+@@ -520,8 +521,9 @@ int FirstStageMain(int argc, char** argv) {
+         }
+ 
+         if (!fsm->DoFirstStageMount()) {
+-            LOG(FATAL) << "Failed to mount required partitions early ...";
++            LOG(ERROR) << "Failed to mount required partitions early ...";
+         }
++        #endif
+     }
+ 
+     struct stat new_root_info {};
+-- 
+2.45.1
+
