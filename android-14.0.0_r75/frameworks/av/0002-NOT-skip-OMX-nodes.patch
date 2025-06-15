@@ -1,0 +1,26 @@
+From be4599dcbe8cd0be837a324dacead3a47deacfc5 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 6 Aug 2022 10:17:12 +0800
+Subject: [PATCH 2/2] NOT skip OMX nodes
+
+users may use legacy kernel without `ION` / `DMABUF_HEAP` enabled,
+enable OMX nodes to support this.
+---
+ media/libstagefright/omx/OMXStore.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index b2d5a70..3be56c8 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -161,7 +161,6 @@ void OMXStore::addPlugin(OMXPluginBase *plugin) {
+                 }
+             }
+             if (skip) {
+-                continue;
+             }
+         }
+ 
+-- 
+2.49.0
+

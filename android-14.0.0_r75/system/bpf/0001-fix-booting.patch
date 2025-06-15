@@ -1,0 +1,29 @@
+From 4f5ba15568891b3f3b2479b19eb82a0df2abfe59 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 5 Oct 2023 23:27:52 +0800
+Subject: [PATCH] fix booting
+
+Change-Id: Ic7bc65bd873742e20438305df2a94539cbec200b
+---
+ bpfloader/BpfLoader.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index 08fd72d..347b452 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -206,9 +206,11 @@ int main(int argc, char** argv) {
+             ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+             ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+                   "problems or startup script race.");
++#if 0 // HACKED
+             ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+             sleep(20);
+             return 2;
++#endif
+         }
+     }
+ 
+-- 
+2.49.0
+

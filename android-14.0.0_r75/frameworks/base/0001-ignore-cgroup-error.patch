@@ -1,0 +1,25 @@
+From 0cdad8898a101010e3c60c4940272d5701f40642 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 11 Nov 2023 10:30:11 +0800
+Subject: [PATCH] ignore cgroup error
+
+---
+ services/core/java/com/android/server/am/ProcessList.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
+index 89c89944e..34e9f377d 100644
+--- a/services/core/java/com/android/server/am/ProcessList.java
++++ b/services/core/java/com/android/server/am/ProcessList.java
+@@ -2518,7 +2518,7 @@ public final class ProcessList {
+                                         "Unable to create process group for "
+                                         + app.processName + " (" + startResult.pid + ")");
+                             } else {
+-                                throw new AssertionError("Unable to create process group for "
++                                Slog.e(ActivityManagerService.TAG, "Unable to create process group for "
+                                     + app.processName + " (" + startResult.pid + ")");
+                             }
+                         } else {
+-- 
+2.49.0
+
