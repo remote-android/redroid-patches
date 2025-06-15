@@ -1,0 +1,24 @@
+From d3d1248ef48a27df5d32e3beaaddbd3d5e21ea6b Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 5 Sep 2024 19:05:14 +0800
+Subject: [PATCH 2/2] ignore /proc/config.gz failed read
+
+---
+ KernelConfigs.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/KernelConfigs.cpp b/KernelConfigs.cpp
+index 3de65ea..3583d66 100644
+--- a/KernelConfigs.cpp
++++ b/KernelConfigs.cpp
+@@ -34,6 +34,7 @@ status_t LoadKernelConfigs(std::map<std::string, std::string>* configs) {
+     gzFile f = gzopen("/proc/config.gz", "rb");
+     if (f == NULL) {
+         LOG(ERROR) << "Could not open /proc/config.gz: " << errno;
++        errno = 0; // HACKED
+         return -errno;
+     }
+ 
+-- 
+2.49.0
+

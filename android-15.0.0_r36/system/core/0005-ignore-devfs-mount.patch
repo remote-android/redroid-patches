@@ -1,0 +1,24 @@
+From 26be568b5c1a7823737e1c4f6f8be198b4c8bf2d Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Fri, 17 Dec 2021 22:44:33 +0800
+Subject: [PATCH 5/7] ignore devfs mount
+
+---
+ init/first_stage_init.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/init/first_stage_init.cpp b/init/first_stage_init.cpp
+index 13c7553..8485b3d 100644
+--- a/init/first_stage_init.cpp
++++ b/init/first_stage_init.cpp
+@@ -349,7 +349,6 @@ int FirstStageMain(int argc, char** argv) {
+     CHECKCALL(setenv("PATH", _PATH_DEFPATH, 1));
+     // Get the basic filesystem setup we need put together in the initramdisk
+     // on / and then we'll let the rc file figure out the rest.
+-    CHECKCALL(mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755"));
+     CHECKCALL(mkdir("/dev/pts", 0755));
+     CHECKCALL(mkdir("/dev/socket", 0755));
+     CHECKCALL(mkdir("/dev/dm-user", 0755));
+-- 
+2.49.0
+

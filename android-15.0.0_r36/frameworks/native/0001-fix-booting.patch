@@ -1,0 +1,59 @@
+From c81007a9003203a45f0c43cc33431b9a7dc93af4 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:04:00 +0800
+Subject: [PATCH] fix booting
+
+---
+ libs/binder/Binder.cpp         | 1 +
+ libs/binder/IPCThreadState.cpp | 2 +-
+ libs/binder/ProcessState.cpp   | 3 +++
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/libs/binder/Binder.cpp b/libs/binder/Binder.cpp
+index 53bd08d..c779108 100644
+--- a/libs/binder/Binder.cpp
++++ b/libs/binder/Binder.cpp
+@@ -522,6 +522,7 @@ void BBinder::setRequestingSid(bool requestingSid)
+                         "setRequestingSid() should not be called after a binder object "
+                         "is parceled/sent to another process");
+ 
++    requestingSid = false; // HACKED
+     Extras* e = mExtras.load(std::memory_order_acquire);
+ 
+     if (!e) {
+diff --git a/libs/binder/IPCThreadState.cpp b/libs/binder/IPCThreadState.cpp
+index 6698d0c..694729a 100644
+--- a/libs/binder/IPCThreadState.cpp
++++ b/libs/binder/IPCThreadState.cpp
+@@ -1441,7 +1441,7 @@ status_t IPCThreadState::executeCommand(int32_t cmd)
+             clearPropagateWorkSource();
+ 
+             mCallingPid = tr.sender_pid;
+-            mCallingSid = reinterpret_cast<const char*>(tr_secctx.secctx);
++            mCallingSid = "HACKED";
+             mCallingUid = tr.sender_euid;
+             mHasExplicitIdentity = false;
+             mLastTransactionBinderFlags = tr.flags;
+diff --git a/libs/binder/ProcessState.cpp b/libs/binder/ProcessState.cpp
+index 5e7f151..83bae2c 100644
+--- a/libs/binder/ProcessState.cpp
++++ b/libs/binder/ProcessState.cpp
+@@ -225,12 +225,15 @@ bool ProcessState::becomeContextManager()
+ {
+     std::unique_lock<std::mutex> _l(mLock);
+ 
++#if 0
+     flat_binder_object obj {
+         .flags = FLAT_BINDER_FLAG_TXN_SECURITY_CTX,
+     };
+ 
+     int result = ioctl(mDriverFD, BINDER_SET_CONTEXT_MGR_EXT, &obj);
++#endif
+ 
++    int result = 1;
+     // fallback to original method
+     if (result != 0) {
+         android_errorWriteLog(0x534e4554, "121035042");
+-- 
+2.49.0
+

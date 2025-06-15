@@ -1,0 +1,24 @@
+From 6cedb36480a13deb50fa49a22f6fcef55905f73a Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 6 Jan 2022 20:47:28 +0800
+Subject: [PATCH 6/7] auto alloc binder devices
+
+---
+ rootdir/init.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 32c6069..ab844ea 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -220,6 +220,7 @@ on init
+     mkdir /dev/binderfs
+     mount binder binder /dev/binderfs stats=global
+     chmod 0755 /dev/binderfs
++    exec -- /vendor/bin/binder_alloc /dev/binderfs/binder-control binder hwbinder vndbinder
+ 
+     # Mount fusectl
+     mount fusectl none /sys/fs/fuse/connections
+-- 
+2.49.0
+

@@ -1,0 +1,58 @@
+From 57886dfd33234781b54c9ed6643b9b8e0c7d9196 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 5 Oct 2023 22:18:09 +0800
+Subject: [PATCH 1/2] fix booting
+
+---
+ bpf/loader/NetBpfLoad.cpp                                 | 8 ++++++--
+ .../com_android_server_connectivity_ClatCoordinator.cpp   | 1 +
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/bpf/loader/NetBpfLoad.cpp b/bpf/loader/NetBpfLoad.cpp
+index 4834b09..edd76f2 100644
+--- a/bpf/loader/NetBpfLoad.cpp
++++ b/bpf/loader/NetBpfLoad.cpp
+@@ -1601,12 +1601,14 @@ static int doLoad(char** argv, char * const envp[]) {
+         //  kernel does not have CONFIG_BPF_JIT=y)
+         // BPF_JIT is required by R VINTF (which means 4.14/4.19/5.4 kernels),
+         // but 4.14/4.19 were released with P & Q, and only 5.4 is new in R+.
+-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_enable", "1\n")) return 1;
++        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_enable", "1\n"))
++            ALOGE("write 1 to /proc/sys/net/core/bpf_jit_enable FAILED");
+ 
+         // Enable JIT kallsyms export for privileged users only
+         // (Note: this (open) will fail with ENOENT 'No such file or directory' if
+         //  kernel does not have CONFIG_HAVE_EBPF_JIT=y)
+-        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_kallsyms", "1\n")) return 1;
++        if (writeProcSysFile("/proc/sys/net/core/bpf_jit_kallsyms", "1\n"))
++            ALOGE("write 1 to /proc/sys/net/core/bpf_jit_kallsyms FAILED");
+     }
+ 
+     // Create all the pin subdirectories
+@@ -1631,9 +1633,11 @@ static int doLoad(char** argv, char * const envp[]) {
+             ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+             ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+                   "problems or startup script race.");
++            #if 0
+             ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+             sleep(20);
+             return 2;
++            #endif
+         }
+     }
+ 
+diff --git a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
+index c0082bb..6144b21 100644
+--- a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
++++ b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
+@@ -132,6 +132,7 @@ static void verifyClatPerms() {
+ 
+ #undef V2
+ 
++    fatal = false;
+     if (fatal) abort();
+ }
+ 
+-- 
+2.49.0
+
