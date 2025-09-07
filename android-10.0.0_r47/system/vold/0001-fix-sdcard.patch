@@ -1,0 +1,40 @@
+From 378c66a1d3f20659ed1df5a51188fe48eb604b80 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 9 May 2021 23:27:12 +0800
+Subject: fix sdcard
+
+---
+ main.cpp                 | 1 +
+ model/EmulatedVolume.cpp | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/main.cpp b/main.cpp
+index 27a701b..aca9cac 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -53,6 +53,7 @@ using android::base::StringPrintf;
+ using android::fs_mgr::ReadDefaultFstab;
+ 
+ int main(int argc, char** argv) {
++    signal(SIGCHLD, SIG_IGN); // ignore sdcard child
+     atrace_set_tracing_enabled(false);
+     setenv("ANDROID_LOG_TAGS", "*:d", 1);  // Do not submit with verbose logs enabled
+     android::base::InitLogging(argv, android::base::LogdLogger(android::base::SYSTEM));
+diff --git a/model/EmulatedVolume.cpp b/model/EmulatedVolume.cpp
+index 552fe2f..e03e5d2 100644
+--- a/model/EmulatedVolume.cpp
++++ b/model/EmulatedVolume.cpp
+@@ -119,8 +119,10 @@ status_t EmulatedVolume::doMount() {
+         }
+     }
+     /* sdcardfs will have exited already. FUSE will still be running */
++    #if 0 // HACKED
+     TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, 0));
+     mFusePid = 0;
++    #endif
+ 
+     return OK;
+ }
+-- 
+2.49.0
+

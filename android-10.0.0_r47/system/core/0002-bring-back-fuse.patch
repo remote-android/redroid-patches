@@ -1,16 +1,16 @@
-From 9a5bad549330a4f1f8cfc35a0e2e5e34c826ab06 Mon Sep 17 00:00:00 2001
+From 4173a1b73e4d6290ecb5cf214df24849f373c6e8 Mon Sep 17 00:00:00 2001
 From: Ziyang Zhou <ziyang.zhou@outlook.com>
 Date: Sun, 9 May 2021 23:27:12 +0800
-Subject: [PATCH 2/7] bring back fuse
+Subject: bring back fuse
 
 ---
  sdcard/Android.bp |   17 -
  sdcard/Android.mk |   13 +
  sdcard/OWNERS     |    1 -
- sdcard/fuse.cpp   | 1476 +++++++++++++++++++++++++++++++++++++++++++++
- sdcard/fuse.h     |  209 +++++++
- sdcard/sdcard.cpp |  429 +++++++++----
- 6 files changed, 2021 insertions(+), 124 deletions(-)
+ sdcard/fuse.cpp   | 1479 +++++++++++++++++++++++++++++++++++++++++++++
+ sdcard/fuse.h     |  210 +++++++
+ sdcard/sdcard.cpp |  443 ++++++++++----
+ 6 files changed, 2040 insertions(+), 123 deletions(-)
  delete mode 100644 sdcard/Android.bp
  create mode 100644 sdcard/Android.mk
  delete mode 100644 sdcard/OWNERS
@@ -19,7 +19,7 @@ Subject: [PATCH 2/7] bring back fuse
 
 diff --git a/sdcard/Android.bp b/sdcard/Android.bp
 deleted file mode 100644
-index c096587ba..000000000
+index c096587..0000000
 --- a/sdcard/Android.bp
 +++ /dev/null
 @@ -1,17 +0,0 @@
@@ -42,7 +42,7 @@ index c096587ba..000000000
 -}
 diff --git a/sdcard/Android.mk b/sdcard/Android.mk
 new file mode 100644
-index 000000000..0c5857462
+index 0000000..0c58574
 --- /dev/null
 +++ b/sdcard/Android.mk
 @@ -0,0 +1,13 @@
@@ -61,17 +61,17 @@ index 000000000..0c5857462
 +include $(BUILD_EXECUTABLE)
 diff --git a/sdcard/OWNERS b/sdcard/OWNERS
 deleted file mode 100644
-index 199a0f885..000000000
+index 199a0f8..0000000
 --- a/sdcard/OWNERS
 +++ /dev/null
 @@ -1 +0,0 @@
 -drosen@google.com
 diff --git a/sdcard/fuse.cpp b/sdcard/fuse.cpp
 new file mode 100644
-index 000000000..95559d7ff
+index 0000000..05c6bfe
 --- /dev/null
 +++ b/sdcard/fuse.cpp
-@@ -0,0 +1,1476 @@
+@@ -0,0 +1,1479 @@
 +/*
 + * Copyright (C) 2010 The Android Open Source Project
 + *
@@ -917,6 +917,9 @@ index 000000000..95559d7ff
 +        if (fuse != fuse->global->fuse_write) {
 +            fuse_notify_delete(fuse->global->fuse_write, parent_node->nid, child_node->nid, name);
 +        }
++        if (fuse != fuse->global->fuse_full) {
++            fuse_notify_delete(fuse->global->fuse_full, parent_node->nid, child_node->nid, name);
++        }
 +    }
 +    return 0;
 +}
@@ -1550,10 +1553,10 @@ index 000000000..95559d7ff
 +}
 diff --git a/sdcard/fuse.h b/sdcard/fuse.h
 new file mode 100644
-index 000000000..9ccd21dc4
+index 0000000..b4c2bb1
 --- /dev/null
 +++ b/sdcard/fuse.h
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,210 @@
 +/*
 + * Copyright (C) 2016 The Android Open Source Project
 + *
@@ -1732,6 +1735,7 @@ index 000000000..9ccd21dc4
 +    struct fuse* fuse_default;
 +    struct fuse* fuse_read;
 +    struct fuse* fuse_write;
++    struct fuse* fuse_full;
 +};
 +
 +/* Single FUSE mount */
@@ -1764,7 +1768,7 @@ index 000000000..9ccd21dc4
 +
 +#endif  /* FUSE_H_ */
 diff --git a/sdcard/sdcard.cpp b/sdcard/sdcard.cpp
-index 2b358197a..0cfac382a 100644
+index 2b35819..0c9f343 100644
 --- a/sdcard/sdcard.cpp
 +++ b/sdcard/sdcard.cpp
 @@ -27,7 +27,6 @@
@@ -1970,7 +1974,7 @@ index 2b358197a..0cfac382a 100644
  
  static void drop_privs(uid_t uid, gid_t gid) {
      ScopedMinijail j(minijail_new());
-@@ -98,35 +205,144 @@ static void drop_privs(uid_t uid, gid_t gid) {
+@@ -98,35 +205,157 @@ static void drop_privs(uid_t uid, gid_t gid) {
      minijail_enter(j.get());
  }
  
@@ -2002,20 +2006,25 @@ index 2b358197a..0cfac382a 100644
 +    struct fuse fuse_default;
 +    struct fuse fuse_read;
 +    struct fuse fuse_write;
++    struct fuse fuse_full;
 +    struct fuse_handler handler_default;
 +    struct fuse_handler handler_read;
 +    struct fuse_handler handler_write;
++    struct fuse_handler handler_full;
 +    pthread_t thread_default;
 +    pthread_t thread_read;
 +    pthread_t thread_write;
++    pthread_t thread_full;
 +
 +    memset(&global, 0, sizeof(global));
 +    memset(&fuse_default, 0, sizeof(fuse_default));
 +    memset(&fuse_read, 0, sizeof(fuse_read));
 +    memset(&fuse_write, 0, sizeof(fuse_write));
++    memset(&fuse_full, 0, sizeof(fuse_full));
 +    memset(&handler_default, 0, sizeof(handler_default));
 +    memset(&handler_read, 0, sizeof(handler_read));
 +    memset(&handler_write, 0, sizeof(handler_write));
++    memset(&handler_full, 0, sizeof(handler_full));
 +
 +    pthread_mutex_init(&global.lock, NULL);
 +    global.package_to_appid = new AppIdMap;
@@ -2047,22 +2056,27 @@ index 2b358197a..0cfac382a 100644
 +    fuse_default.global = &global;
 +    fuse_read.global = &global;
 +    fuse_write.global = &global;
++    fuse_full.global = &global;
 +
 +    global.fuse_default = &fuse_default;
 +    global.fuse_read = &fuse_read;
 +    global.fuse_write = &fuse_write;
++    global.fuse_full = &fuse_full;
 +
 +    snprintf(fuse_default.dest_path, PATH_MAX, "/mnt/runtime/default/%s", label);
 +    snprintf(fuse_read.dest_path, PATH_MAX, "/mnt/runtime/read/%s", label);
 +    snprintf(fuse_write.dest_path, PATH_MAX, "/mnt/runtime/write/%s", label);
++    snprintf(fuse_full.dest_path, PATH_MAX, "/mnt/runtime/full/%s", label);
 +
 +    handler_default.fuse = &fuse_default;
 +    handler_read.fuse = &fuse_read;
 +    handler_write.fuse = &fuse_write;
++    handler_full.fuse = &fuse_full;
 +
 +    handler_default.token = 0;
 +    handler_read.token = 1;
 +    handler_write.token = 2;
++    handler_full.token = 3;
 +
 +    umask(0);
 +
@@ -2071,7 +2085,8 @@ index 2b358197a..0cfac382a 100644
 +         * permissions are completely masked off. */
 +        if (fuse_setup(&fuse_default, AID_SDCARD_RW, 0006)
 +                || fuse_setup(&fuse_read, AID_EVERYBODY, 0027)
-+                || fuse_setup(&fuse_write, AID_EVERYBODY, full_write ? 0007 : 0027)) {
++                || fuse_setup(&fuse_write, AID_EVERYBODY, full_write ? 0007 : 0027)
++                || fuse_setup(&fuse_full, AID_EVERYBODY, 0007)) {
 +            PLOG(FATAL) << "failed to fuse_setup";
 +        }
 +    } else {
@@ -2080,7 +2095,8 @@ index 2b358197a..0cfac382a 100644
 +         * deep inside attr_from_stat(). */
 +        if (fuse_setup(&fuse_default, AID_SDCARD_RW, 0006)
 +                || fuse_setup(&fuse_read, AID_EVERYBODY, full_write ? 0027 : 0022)
-+                || fuse_setup(&fuse_write, AID_EVERYBODY, full_write ? 0007 : 0022)) {
++                || fuse_setup(&fuse_write, AID_EVERYBODY, full_write ? 0007 : 0022)
++                || fuse_setup(&fuse_full, AID_EVERYBODY, 0007)) {
 +            PLOG(FATAL) << "failed to fuse_setup";
          }
 +    }
@@ -2099,7 +2115,8 @@ index 2b358197a..0cfac382a 100644
 -            PLOG(WARNING) << "Failed to mount sdcardfs with options " << opts;
 +    if (pthread_create(&thread_default, NULL, start_handler, &handler_default)
 +            || pthread_create(&thread_read, NULL, start_handler, &handler_read)
-+            || pthread_create(&thread_write, NULL, start_handler, &handler_write)) {
++            || pthread_create(&thread_write, NULL, start_handler, &handler_write)
++            || pthread_create(&thread_full, NULL, start_handler, &handler_full)) {
 +        LOG(FATAL) << "failed to pthread_create";
 +    }
 +
@@ -2139,7 +2156,7 @@ index 2b358197a..0cfac382a 100644
  }
  
  static bool sdcardfs_setup_bind_remount(const std::string& source_path, const std::string& dest_path,
-@@ -150,43 +366,22 @@ static bool sdcardfs_setup_bind_remount(const std::string& source_path, const st
+@@ -150,22 +379,9 @@ static bool sdcardfs_setup_bind_remount(const std::string& source_path, const st
      return true;
  }
  
@@ -2163,10 +2180,7 @@ index 2b358197a..0cfac382a 100644
      std::string dest_path_default = "/mnt/runtime/default/" + label;
      std::string dest_path_read = "/mnt/runtime/read/" + label;
      std::string dest_path_write = "/mnt/runtime/write/" + label;
--    std::string dest_path_full = "/mnt/runtime/full/" + label;
- 
-     umask(0);
-     if (multi_user) {
+@@ -176,17 +392,11 @@ static void run_sdcardfs(const std::string& source_path, const std::string& labe
          // Multi-user storage is fully isolated per user, so "other"
          // permissions are completely masked off.
          if (!sdcardfs_setup(source_path, dest_path_default, uid, gid, multi_user, userid,
@@ -2184,11 +2198,12 @@ index 2b358197a..0cfac382a 100644
 +                            AID_SDCARD_RW, 0006, derive_gid) ||
 +            !sdcardfs_setup_bind_remount(dest_path_default, dest_path_read, AID_EVERYBODY, 0027) ||
 +            !sdcardfs_setup_bind_remount(dest_path_default, dest_path_write, AID_EVERYBODY,
-+                                         full_write ? 0007 : 0027)) {
++                                         full_write ? 0007 : 0027) ||
++            !sdcardfs_setup_bind_remount(dest_path_default, dest_path_full, AID_EVERYBODY, 0007)) {
              LOG(FATAL) << "failed to sdcardfs_setup";
          }
      } else {
-@@ -194,17 +389,11 @@ static void run_sdcardfs(const std::string& source_path, const std::string& labe
+@@ -194,17 +404,12 @@ static void run_sdcardfs(const std::string& source_path, const std::string& labe
          // the Android directories are masked off to a single user
          // deep inside attr_from_stat().
          if (!sdcardfs_setup(source_path, dest_path_default, uid, gid, multi_user, userid,
@@ -2207,11 +2222,12 @@ index 2b358197a..0cfac382a 100644
 +            !sdcardfs_setup_bind_remount(dest_path_default, dest_path_read, AID_EVERYBODY,
 +                                         full_write ? 0027 : 0022) ||
 +            !sdcardfs_setup_bind_remount(dest_path_default, dest_path_write, AID_EVERYBODY,
-+                                         full_write ? 0007 : 0022)) {
++                                         full_write ? 0007 : 0022) ||
++            !sdcardfs_setup_bind_remount(dest_path_default, dest_path_full, AID_EVERYBODY, 0007)) {
              LOG(FATAL) << "failed to sdcardfs_setup";
          }
      }
-@@ -220,6 +409,41 @@ static void run_sdcardfs(const std::string& source_path, const std::string& labe
+@@ -220,6 +425,41 @@ static void run_sdcardfs(const std::string& source_path, const std::string& labe
      exit(0);
  }
  
@@ -2253,7 +2269,7 @@ index 2b358197a..0cfac382a 100644
  static int usage() {
      LOG(ERROR) << "usage: sdcard [OPTIONS] <source_path> <label>"
                 << "    -u: specify UID to run as"
-@@ -227,8 +451,7 @@ static int usage() {
+@@ -227,8 +467,7 @@ static int usage() {
                 << "    -U: specify user ID that owns device"
                 << "    -m: source_path is multi-user"
                 << "    -w: runtime write mount has full write access"
@@ -2263,7 +2279,7 @@ index 2b358197a..0cfac382a 100644
      return 1;
  }
  
-@@ -241,15 +464,10 @@ int main(int argc, char **argv) {
+@@ -241,15 +480,10 @@ int main(int argc, char **argv) {
      bool multi_user = false;
      bool full_write = false;
      bool derive_gid = false;
@@ -2279,7 +2295,7 @@ index 2b358197a..0cfac382a 100644
      int opt;
      while ((opt = getopt(argc, argv, "u:g:U:mwGio")) != -1) {
          switch (opt) {
-@@ -272,14 +490,10 @@ int main(int argc, char **argv) {
+@@ -272,14 +506,10 @@ int main(int argc, char **argv) {
                  derive_gid = true;
                  break;
              case 'i':
@@ -2294,7 +2310,7 @@ index 2b358197a..0cfac382a 100644
                  return usage();
          }
      }
-@@ -320,7 +534,10 @@ int main(int argc, char **argv) {
+@@ -320,7 +550,10 @@ int main(int argc, char **argv) {
          sleep(1);
      }
  
@@ -2308,5 +2324,5 @@ index 2b358197a..0cfac382a 100644
      return 1;
  }
 -- 
-2.34.1
+2.49.0
 
