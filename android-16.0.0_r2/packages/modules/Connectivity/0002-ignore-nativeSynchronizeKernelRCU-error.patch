@@ -1,0 +1,24 @@
+From ba7f80bea4177bc442cd9ccf0e9456de1cda32f1 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Thu, 5 Sep 2024 19:11:19 +0800
+Subject: [PATCH 2/2] ignore nativeSynchronizeKernelRCU error
+
+---
+ .../native/bpfmapjni/com_android_net_module_util_BpfMap.cpp      | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/staticlibs/native/bpfmapjni/com_android_net_module_util_BpfMap.cpp b/staticlibs/native/bpfmapjni/com_android_net_module_util_BpfMap.cpp
+index d862f6b..8f5ecdf 100644
+--- a/staticlibs/native/bpfmapjni/com_android_net_module_util_BpfMap.cpp
++++ b/staticlibs/native/bpfmapjni/com_android_net_module_util_BpfMap.cpp
+@@ -140,7 +140,6 @@ static void com_android_net_module_util_BpfMap_nativeSynchronizeKernelRCU(JNIEnv
+     const int pfSocket = socket(AF_KEY, SOCK_RAW | SOCK_CLOEXEC, PF_KEY_V2);
+ 
+     if (pfSocket < 0) {
+-        jniThrowErrnoException(env, "nativeSynchronizeKernelRCU:socket", errno);
+         return;
+     }
+ 
+-- 
+2.49.0
+

@@ -1,0 +1,32 @@
+From d0a81eab5bafdc3f446d921965a0fd555abe4170 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Mon, 26 Apr 2021 22:55:03 +0800
+Subject: [PATCH] disable seccomp
+
+---
+ libminijail.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libminijail.c b/libminijail.c
+index de59b8a..15016a1 100644
+--- a/libminijail.c
++++ b/libminijail.c
+@@ -2702,6 +2702,7 @@ static void set_seccomp_filter(const struct minijail *j)
+ 	/*
+ 	 * Install the syscall filter.
+ 	 */
++#if 0 // HACKED
+ 	if (j->flags.seccomp_filter) {
+ 		if (j->flags.seccomp_filter_tsync ||
+ 		    j->flags.seccomp_filter_allow_speculation) {
+@@ -2723,6 +2724,7 @@ static void set_seccomp_filter(const struct minijail *j)
+ 			}
+ 		}
+ 	}
++#endif
+ }
+ 
+ static pid_t forward_pid = -1;
+-- 
+2.49.0
+

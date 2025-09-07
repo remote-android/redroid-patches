@@ -1,0 +1,26 @@
+From b3426e7aa82ad2ae5b0935fc53216335310310df Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Fri, 25 Jun 2021 15:56:47 +0000
+Subject: [PATCH 4/7] ignore input subsystem
+
+---
+ rootdir/ueventd.rc | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 3927501..404da8f 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -12,9 +12,6 @@ subsystem drm
+     devname uevent_devpath
+     dirname /dev/dri
+ 
+-subsystem input
+-    devname uevent_devpath
+-    dirname /dev/input
+ 
+ subsystem sound
+     devname uevent_devpath
+-- 
+2.49.0
+

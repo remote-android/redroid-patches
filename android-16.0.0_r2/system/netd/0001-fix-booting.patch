@@ -1,0 +1,89 @@
+From 0c2bc373eaea2c413570bc64471d2063c86209b4 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 31 Jul 2021 06:14:33 +0000
+Subject: [PATCH] fix booting
+
+Change-Id: I87b1c6fca9361a66a021a3dc484f4d69224744a8
+---
+ server/BandwidthController.cpp       | 1 +
+ server/Controllers.cpp               | 2 --
+ server/IptablesRestoreController.cpp | 1 +
+ server/TetherController.cpp          | 2 ++
+ server/main.cpp                      | 1 -
+ 5 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/server/BandwidthController.cpp b/server/BandwidthController.cpp
+index 8a96738..f1cbf14 100644
+--- a/server/BandwidthController.cpp
++++ b/server/BandwidthController.cpp
+@@ -527,6 +527,7 @@ int BandwidthController::updateQuota(const std::string& quotaName, int64_t bytes
+     if (!isOk(file)) {
+         int res = errno;
+         ALOGE("Updating quota %s failed (%s)", quotaName.c_str(), toString(file).c_str());
++        res = 0; // HACKED
+         return -res;
+     }
+     // TODO: should we propagate this error?
+diff --git a/server/Controllers.cpp b/server/Controllers.cpp
+index 48d0c50..50b8408 100644
+--- a/server/Controllers.cpp
++++ b/server/Controllers.cpp
+@@ -326,7 +326,6 @@ void Controllers::init() {
+         // As such simply exit netd.  This may crash loop the system, but by failing
+         // to bootup we will trigger rollback and thus this offers us protection against
+         // a mainline update breaking things.
+-        exit(1);
+     }
+     gLog.info("Enabling bandwidth control: %" PRId64 "us", s.getTimeAndResetUs());
+ 
+@@ -339,7 +338,6 @@ void Controllers::init() {
+     netdutils::Status xStatus = XfrmController::Init();
+     if (!isOk(xStatus)) {
+         gLog.error("Failed to initialize XfrmController (%s)", netdutils::toString(xStatus).c_str());
+-        exit(3);
+     };
+     gLog.info("Initializing XfrmController: %" PRId64 "us", s.getTimeAndResetUs());
+ }
+diff --git a/server/IptablesRestoreController.cpp b/server/IptablesRestoreController.cpp
+index 49b48d3..07bdda4 100644
+--- a/server/IptablesRestoreController.cpp
++++ b/server/IptablesRestoreController.cpp
+@@ -349,6 +349,7 @@ int IptablesRestoreController::execute(const IptablesTarget target, const std::s
+     if (target == V6 || target == V4V6) {
+         res |= sendCommand(IP6TABLES_PROCESS, command, output);
+     }
++    res = 0;  // ignore iptables error
+     return res;
+ }
+ 
+diff --git a/server/TetherController.cpp b/server/TetherController.cpp
+index b159d95..a582cd8 100644
+--- a/server/TetherController.cpp
++++ b/server/TetherController.cpp
+@@ -913,9 +913,11 @@ StatusOr<TetherController::TetherStatsList> TetherController::getTetherStats() {
+         }
+ 
+         if (int ret = addForwardChainStats(statsList, statsString, parsedIptablesOutput)) {
++#if 0
+             return statusFromErrno(-ret, StringPrintf("failed to parse %s tether stats:\n%s",
+                                                       target == V4 ? "IPv4": "IPv6",
+                                                       parsedIptablesOutput.c_str()));
++#endif
+         }
+     }
+ 
+diff --git a/server/main.cpp b/server/main.cpp
+index d27fd76..1a79b83 100644
+--- a/server/main.cpp
++++ b/server/main.cpp
+@@ -142,7 +142,6 @@ int main() {
+ 
+     if (libnetd_updatable_init(cg2_path.c_str())) {
+         ALOGE("libnetd_updatable_init failed");
+-        exit(1);
+     }
+     gLog.info("libnetd_updatable_init success");
+ 
+-- 
+2.49.0
+

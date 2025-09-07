@@ -1,0 +1,28 @@
+From 20133571482acb99467b95058e393e19121bde44 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Tue, 24 Jun 2025 23:24:25 +0800
+Subject: [PATCH] fix booting
+
+Change-Id: I27f6ed25cb3b2364dbbc909ce795e13a9a6e194e
+---
+ ServiceManager.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/ServiceManager.cpp b/ServiceManager.cpp
+index 73582d2..056edbe 100644
+--- a/ServiceManager.cpp
++++ b/ServiceManager.cpp
+@@ -47,8 +47,10 @@ AccessControl::CallingContext getBinderCallingContext() {
+             android_errorWriteLog(0x534e4554, "121035042");
+         }
+ 
++        #if 0 // HACKED
+         CHECK_EQ(nullptr, self->getServingStackPointer())
+                 << "Pid " << pid << " missing service context.";
++        #endif
+ 
+         return AccessControl::getCallingContext(pid);
+     } else {
+-- 
+2.49.0
+

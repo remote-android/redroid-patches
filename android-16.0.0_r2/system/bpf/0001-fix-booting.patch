@@ -1,0 +1,29 @@
+From 55e045ad4fe9121a13dd12799a5ad77e0b43ec42 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sun, 15 Jun 2025 19:29:19 +0800
+Subject: [PATCH] fix booting
+
+Change-Id: I01e3abbbd3e879f9880177f1bb43ab634df0aec8
+---
+ loader/Loader.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/loader/Loader.cpp b/loader/Loader.cpp
+index 940ce19..336bb6a 100644
+--- a/loader/Loader.cpp
++++ b/loader/Loader.cpp
+@@ -990,9 +990,11 @@ void legacyBpfLoader() {
+             ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+             ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+                   "problems or startup script race.");
++            #if 0
+             ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+             sleep(20);
+             exit(121);
++            #endif
+         }
+     }
+ }
+-- 
+2.49.0
+
